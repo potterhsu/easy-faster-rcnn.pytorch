@@ -17,21 +17,22 @@ An easy implementation of Faster R-CNN in PyTorch.
 
 * Training
 
-    * **~7 examples** per seconds
+    * **~7 examples** per second
 
     * **25 minutes** every 10000 steps
 
-    * **3 hours** for 70000 steps (which leads to mAP=70%)
+    * **3 hours** for 70000 steps (which leads to mAP=70.29%)
 
 * Inference
 
-    * **~9 examples** per seconds
+    * **~9 examples** per second
 
 
 ## Requirements
 
 * Python 3.6
-* PyTorch 0.3.1
+* torch 0.3.1
+* torchvision 0.2.0
 * tqdm
 
     ```
