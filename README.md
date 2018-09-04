@@ -27,6 +27,9 @@ An easy implementation of Faster R-CNN in PyTorch.
 
     * **~9 examples** per second
 
+### Trained Model
+
+* [Download from Google Drive](https://drive.google.com/open?id=1nkKGnT8TGVPtOwICkHhSdi9gsnglHZ8N)
 
 ## Requirements
 
