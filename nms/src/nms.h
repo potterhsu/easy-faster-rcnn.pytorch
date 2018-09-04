@@ -1,0 +1,1 @@
+int suppress(THCudaTensor *bboxes, float threshold, THCudaLongTensor *keepIndices);
