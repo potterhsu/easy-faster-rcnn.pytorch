@@ -104,7 +104,7 @@ An easy implementation of Faster R-CNN in PyTorch.
 1. Evaluate
 
     ```
-    $ python eval.py ./checkpoints/model-100.pth --data_dir=./data -r=./results
+    $ python eval.py ./checkpoints/model-100.pth --data_dir=./data --results_dir=./results
     ```
 
 1. Clean
@@ -117,5 +117,5 @@ An easy implementation of Faster R-CNN in PyTorch.
 1. Infer
 
     ```
-    $ python infer.py input-image.jpg output-image.jpg -c=./checkpoints/model-100.pth
+    $ python infer.py input-image.jpg output-image.jpg --checkpoint=./checkpoints/model-100.pth
     ```
