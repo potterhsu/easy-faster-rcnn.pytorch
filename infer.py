@@ -11,7 +11,7 @@ from model import Model
 
 def _infer(path_to_input_image, path_to_output_image, path_to_checkpoint):
     image = transforms.Image.open(path_to_input_image)
-    image_tensor, scale = Dataset.preprosess(image)
+    image_tensor, scale = Dataset.preprocess(image)
 
     model = Model().cuda()
     model.load(path_to_checkpoint)
