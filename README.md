@@ -3,6 +3,11 @@
 An easy implementation of Faster R-CNN in PyTorch.
 
 
+## Demo
+
+![](https://github.com/potterhsu/easy-faster-rcnn.pytorch/blob/master/images/inference-result.jpg?raw=true)
+
+
 ## Results
 
 ### Average Precision
@@ -75,8 +80,17 @@ An easy implementation of Faster R-CNN in PyTorch.
     ```
     $ nvcc -arch=sm_61 -c --compiler-options -fPIC -o nms/src/nms_cuda.o nms/src/nms_cuda.cu
     $ python nms/build.py
+    $ python test_nms.py
     ```
     > sm_61 is for GTX-1080-Ti, to see others, visit [here](http://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/)
+    
+    * result after running `test_nms.py`
+    
+        ![](https://github.com/potterhsu/easy-faster-rcnn.pytorch/blob/master/images/test_nms.png?raw=true)
+    
+    * illustration for NMS CUDA
+    
+        ![](https://github.com/potterhsu/easy-faster-rcnn.pytorch/blob/master/images/nms_cuda.png?raw=true)    
 
 
 ## Usage
@@ -98,4 +112,10 @@ An easy implementation of Faster R-CNN in PyTorch.
     ```
     $ rm -rf ./checkpoints
     $ rm -rf ./results
+    ```
+
+1. Infer
+
+    ```
+    $ python infer.py input-image.jpg output-image.jpg -c=./checkpoints/model-100.pth
     ```
