@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 from enum import Enum
 from typing import List, Tuple
 
+import PIL
 import torch.utils.data
 from PIL import Image, ImageOps
 from torchvision import transforms
@@ -105,6 +106,13 @@ class Dataset(torch.utils.data.Dataset):
             image = ImageOps.mirror(image)
             bboxes[:, [0, 2]] = image.width - bboxes[:, [2, 0]]  # index 0 and 2 represent `left` and `right` respectively
 
+        image, scale = Dataset.preprosess(image)
+        bboxes *= scale
+
+        return image_id, image, scale, bboxes, labels
+
+    @staticmethod
+    def preprosess(image: PIL.Image.Image):
         # resize according to the rules:
         #   1. scale shorter edge to 600
         #   2. after scaling, if longer edge > 1000, scale longer edge to 1000
@@ -113,8 +121,6 @@ class Dataset(torch.utils.data.Dataset):
         scale_for_longer_edge = (1000.0 / longer_edge_after_scaling) if longer_edge_after_scaling > 1000 else 1
         scale = scale_for_shorter_edge * scale_for_longer_edge
 
-        bboxes *= scale
-
         transform = transforms.Compose([
             transforms.Resize((round(image.height * scale), round(image.width * scale))),  # interpolation `BILINEAR` is applied by default
             transforms.ToTensor(),
@@ -122,7 +128,7 @@ class Dataset(torch.utils.data.Dataset):
         ])
         image = transform(image)
 
-        return image_id, image, scale, bboxes, labels
+        return image, scale
 
 
 if __name__ == '__main__':

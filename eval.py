@@ -7,12 +7,12 @@ from evaluator import Evaluator
 from model import Model
 
 
-def _eval(checkpoint, path_to_data_dir, path_to_results_dir):
+def _eval(path_to_checkpoint, path_to_data_dir, path_to_results_dir):
     dataset = Dataset(path_to_data_dir, Dataset.Mode.TEST)
     evaluator = Evaluator(dataset, path_to_data_dir, path_to_results_dir)
 
     model = Model().cuda()
-    model.load(checkpoint)
+    model.load(path_to_checkpoint)
 
     label_to_ap_dict = evaluator.evaluate(model)
     mean_ap = np.mean([v for k, v in label_to_ap_dict.items()])
@@ -31,10 +31,10 @@ if __name__ == '__main__':
         parser.add_argument('-r', '--results_dir', default='./results', help='path to results directory')
         args = parser.parse_args()
 
-        checkpoint = args.checkpoint
+        path_to_checkpoint = args.checkpoint
         path_to_data_dir = args.data_dir
         path_to_results_dir = args.results_dir
 
-        _eval(checkpoint, path_to_data_dir, path_to_results_dir)
+        _eval(path_to_checkpoint, path_to_data_dir, path_to_results_dir)
 
     main()
