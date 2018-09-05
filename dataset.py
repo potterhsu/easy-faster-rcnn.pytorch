@@ -106,13 +106,13 @@ class Dataset(torch.utils.data.Dataset):
             image = ImageOps.mirror(image)
             bboxes[:, [0, 2]] = image.width - bboxes[:, [2, 0]]  # index 0 and 2 represent `left` and `right` respectively
 
-        image, scale = Dataset.preprosess(image)
+        image, scale = Dataset.preprocess(image)
         bboxes *= scale
 
         return image_id, image, scale, bboxes, labels
 
     @staticmethod
-    def preprosess(image: PIL.Image.Image):
+    def preprocess(image: PIL.Image.Image):
         # resize according to the rules:
         #   1. scale shorter edge to 600
         #   2. after scaling, if longer edge > 1000, scale longer edge to 1000
