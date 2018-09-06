@@ -19,7 +19,7 @@ class Evaluator(object):
     def evaluate(self, model):
         all_image_ids, all_pred_bboxes, all_pred_labels, all_pred_probs = [], [], [], []
 
-        for batch_index, (image_id_batch, image_batch, scale_batch, _, _) in tqdm(enumerate(self.dataloader)):
+        for batch_index, (image_id_batch, image_batch, scale_batch, _, _) in enumerate(tqdm(self.dataloader)):
             image_id = image_id_batch[0]
             image = image_batch[0].cuda()
             scale = scale_batch[0]
