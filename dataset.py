@@ -7,8 +7,8 @@ from typing import List, Tuple
 import PIL
 import torch.utils.data
 from PIL import Image, ImageOps
+from torch import Tensor
 from torchvision import transforms
-from torch import FloatTensor, LongTensor
 
 from bbox import BBox
 
@@ -21,7 +21,7 @@ class Dataset(torch.utils.data.Dataset):
 
     class Annotation(object):
         class Object(object):
-            def __init__(self, name: str, difficult: bool, bbox: BBox) -> None:
+            def __init__(self, name: str, difficult: bool, bbox: BBox):
                 super().__init__()
                 self.name = name
                 self.difficult = difficult
@@ -31,7 +31,7 @@ class Dataset(torch.utils.data.Dataset):
                 return 'Object[name={:s}, difficult={!s}, bbox={!s}]'.format(
                     self.name, self.difficult, self.bbox)
 
-        def __init__(self, filename: str, objects: List[Object]) -> None:
+        def __init__(self, filename: str, objects: List[Object]):
             super().__init__()
             self.filename = filename
             self.objects = objects
@@ -46,7 +46,7 @@ class Dataset(torch.utils.data.Dataset):
 
     LABEL_TO_CATEGORY_DICT = {v: k for k, v in CATEGORY_TO_LABEL_DICT.items()}
 
-    def __init__(self, path_to_data_dir: str, mode: Mode) -> None:
+    def __init__(self, path_to_data_dir: str, mode: Mode):
         super().__init__()
 
         self._mode = mode
@@ -89,15 +89,15 @@ class Dataset(torch.utils.data.Dataset):
     def __len__(self) -> int:
         return len(self._image_id_to_annotation_dict)
 
-    def __getitem__(self, index: int) -> Tuple[str, FloatTensor, float, FloatTensor, LongTensor]:
+    def __getitem__(self, index: int) -> Tuple[str, Tensor, float, Tensor, Tensor]:
         image_id = self._image_ids[index]
         annotation = self._image_id_to_annotation_dict[image_id]
 
         bboxes = [obj.bbox.tolist() for obj in annotation.objects if not obj.difficult]
         labels = [Dataset.CATEGORY_TO_LABEL_DICT[obj.name] for obj in annotation.objects if not obj.difficult]
 
-        bboxes = torch.FloatTensor(bboxes)
-        labels = torch.LongTensor(labels)
+        bboxes = torch.tensor(bboxes, dtype=torch.float)
+        labels = torch.tensor(labels, dtype=torch.long)
 
         image = Image.open(os.path.join(self._path_to_jpeg_images_dir, annotation.filename))
 
@@ -112,7 +112,7 @@ class Dataset(torch.utils.data.Dataset):
         return image_id, image, scale, bboxes, labels
 
     @staticmethod
-    def preprocess(image: PIL.Image.Image):
+    def preprocess(image: PIL.Image.Image) -> Tuple[Tensor, float]:
         # resize according to the rules:
         #   1. scale shorter edge to 600
         #   2. after scaling, if longer edge > 1000, scale longer edge to 1000

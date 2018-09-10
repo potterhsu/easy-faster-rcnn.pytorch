@@ -7,7 +7,7 @@ from evaluator import Evaluator
 from model import Model
 
 
-def _eval(path_to_checkpoint, path_to_data_dir, path_to_results_dir):
+def _eval(path_to_checkpoint: str, path_to_data_dir: str, path_to_results_dir: str):
     dataset = Dataset(path_to_data_dir, Dataset.Mode.TEST)
     evaluator = Evaluator(dataset, path_to_data_dir, path_to_results_dir)
 

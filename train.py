@@ -10,12 +10,12 @@ from dataset import Dataset
 from model import Model
 
 
-def _train(path_to_data_dir: str, path_to_checkpoints_dir: str) -> None:
+def _train(path_to_data_dir: str, path_to_checkpoints_dir: str):
     dataset = Dataset(path_to_data_dir, mode=Dataset.Mode.TRAIN)
-    dataloader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=8)
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=8, pin_memory=True)
 
     model = Model().cuda()
-    optimizer = optim.SGD([it for it in model.parameters() if it.requires_grad], lr=1e-3, momentum=0.9, weight_decay=0.0005)
+    optimizer = optim.SGD(model.parameters(), lr=1e-3, momentum=0.9, weight_decay=0.0005)
     scheduler = StepLR(optimizer, step_size=50000, gamma=0.1)
 
     step = 0
@@ -53,7 +53,7 @@ def _train(path_to_data_dir: str, path_to_checkpoints_dir: str) -> None:
             if step % num_steps_to_display == 0:
                 steps_per_sec = num_steps_to_display / elapsed_time
                 elapsed_time = 0.0
-                print(f'[Step {step}] Loss = {loss.data[0]:.6f}, Learning Rate = {scheduler.get_lr()[0]} ({steps_per_sec:.2f} steps/sec)')
+                print(f'[Step {step}] Loss = {loss.item():.6f}, Learning Rate = {scheduler.get_lr()[0]} ({steps_per_sec:.2f} steps/sec)')
 
             if step % num_steps_to_snapshot == 0:
                 path_to_checkpoint = model.save(path_to_checkpoints_dir, step)

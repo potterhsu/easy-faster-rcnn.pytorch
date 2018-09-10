@@ -26,11 +26,11 @@ An easy implementation of Faster R-CNN in PyTorch.
 
     * **25 minutes** every 10000 steps
 
-    * **3 hours** for 70000 steps (which leads to mAP=70.29%)
+    * **3 hours** for 70000 steps (which leads to mAP=xx.xx%)
 
 * Inference
 
-    * **~9 examples** per second
+    * **~13 examples** per second
 
 ### Trained Model
 
@@ -39,8 +39,8 @@ An easy implementation of Faster R-CNN in PyTorch.
 ## Requirements
 
 * Python 3.6
-* torch 0.3.1
-* torchvision 0.2.0
+* torch 0.4.1
+* torchvision 0.2.1
 * tqdm
 
     ```
@@ -50,8 +50,8 @@ An easy implementation of Faster R-CNN in PyTorch.
 ## Setup
 
 1. Download VOC 2007 Dataset
-    - [Training / Validation](http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtrainval_06-Nov-2007.tar)
-    - [Test](http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtest_06-Nov-2007.tar)
+    - [Training / Validation](http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtrainval_06-Nov-2007.tar) (5011 images)
+    - [Test](http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtest_06-Nov-2007.tar) (4952 images)
 
 1. Extract to data folder, now your folder structure should be like:
     ```
@@ -83,7 +83,9 @@ An easy implementation of Faster R-CNN in PyTorch.
     $ python test_nms.py
     ```
     > sm_61 is for GTX-1080-Ti, to see others, visit [here](http://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/)
-    
+
+    > Try to rebuild module if unit test fails
+
     * result after running `test_nms.py`
     
         ![](https://github.com/potterhsu/easy-faster-rcnn.pytorch/blob/master/images/test_nms.png?raw=true)

@@ -9,7 +9,7 @@ from dataset import Dataset
 from model import Model
 
 
-def _infer(path_to_input_image, path_to_output_image, path_to_checkpoint):
+def _infer(path_to_input_image: str, path_to_output_image: str, path_to_checkpoint: str):
     image = transforms.Image.open(path_to_input_image)
     image_tensor, scale = Dataset.preprocess(image)
 

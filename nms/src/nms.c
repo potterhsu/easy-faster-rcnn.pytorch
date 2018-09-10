@@ -4,13 +4,13 @@
 extern THCState *state;
 
 int suppress(THCudaTensor *bboxes, float threshold, THCudaLongTensor *keepIndices) {
-    if (!((bboxes->nDimension == 2) && (bboxes->size[1] == 4)))
+    if (!((THCudaTensor_nDimension(state, bboxes) == 2) && (THCudaTensor_size(state, bboxes, 1) == 4)))
         return 0;
 
-    long numBoxes = bboxes->size[0];
+    long numBoxes = THCudaTensor_size(state, bboxes, 0);
     THLongTensor *keepIndicesTmp = THLongTensor_newWithSize1d(numBoxes);
-    long numKeepBoxes;
 
+    long numKeepBoxes;
     nms(THCudaTensor_data(state, bboxes), numBoxes, threshold, THLongTensor_data(keepIndicesTmp), &numKeepBoxes);
 
     THLongTensor_resize1d(keepIndicesTmp, numKeepBoxes);
