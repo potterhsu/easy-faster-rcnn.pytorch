@@ -3,10 +3,10 @@ import time
 from typing import Union, Tuple, List
 
 import torch
-import torchvision.models
 from torch import nn, Tensor
 from torch.nn import functional as F
 
+from backbone.interface import Interface as BackboneInterface
 from bbox import BBox
 from nms.nms import NMS
 from rpn.region_proposal_network import RegionProposalNetwork
@@ -41,25 +41,24 @@ class Model(nn.Module):
                 self.proposal_classes = proposal_classes
                 self.proposal_transformers = proposal_transformers
 
-    def __init__(self):
+    def __init__(self, backbone: BackboneInterface):
         super().__init__()
 
-        vgg16 = torchvision.models.vgg16(pretrained=True)
+        self.features = backbone.features()
+        self._bn_modules = [it for it in self.features.modules() if isinstance(it, nn.BatchNorm2d)]
 
-        features = list(vgg16.features.children())
-        for parameters in [feature.parameters() for i, feature in enumerate(features) if i < 10]:
-            for parameter in parameters:
-                parameter.requires_grad = False
-        features.pop()
-
-        self.features = nn.Sequential(*features)
         self.rpn = RegionProposalNetwork()
-        self.head = Model.Head()
+        self.detection = Model.Detection()
 
         self._transformer_normalize_mean = torch.tensor([0., 0., 0., 0.], dtype=torch.float)
         self._transformer_normalize_std = torch.tensor([.1, .1, .2, .2], dtype=torch.float)
 
     def forward(self, forward_input: Union[ForwardInput.Train, ForwardInput.Eval]) -> Union[ForwardOutput.Train, ForwardOutput.Eval]:
+        for bn_module in self._bn_modules:
+            bn_module.eval()
+            for parameter in bn_module.parameters():
+                parameter.requires_grad = False
+
         image = forward_input.image.unsqueeze(dim=0)
         image_height, image_width = image.shape[2], image.shape[3]
 
@@ -73,12 +72,12 @@ class Model(nn.Module):
             anchor_objectness_loss, anchor_transformer_loss = self.rpn.loss(anchor_objectnesses, anchor_transformers, gt_anchor_objectnesses, gt_anchor_transformers)
 
             proposal_bboxes, gt_proposal_classes, gt_proposal_transformers = self.sample(proposal_bboxes, forward_input.gt_classes, forward_input.gt_bboxes)
-            proposal_classes, proposal_transformers = self.head.forward(features, proposal_bboxes)
+            proposal_classes, proposal_transformers = self.detection.forward(features, proposal_bboxes)
             proposal_class_loss, proposal_transformer_loss = self.loss(proposal_classes, proposal_transformers, gt_proposal_classes, gt_proposal_transformers)
 
             forward_output = Model.ForwardOutput.Train(anchor_objectness_loss, anchor_transformer_loss, proposal_class_loss, proposal_transformer_loss)
         else:
-            proposal_classes, proposal_transformers = self.head.forward(features, proposal_bboxes)
+            proposal_classes, proposal_transformers = self.detection.forward(features, proposal_bboxes)
             forward_output = Model.ForwardOutput.Eval(proposal_bboxes, proposal_classes, proposal_transformers)
 
         return forward_output
@@ -189,7 +188,7 @@ class Model(nn.Module):
 
         return bboxes, labels, probs
 
-    class Head(nn.Module):
+    class Detection(nn.Module):
 
         def __init__(self):
             super().__init__()
@@ -204,7 +203,7 @@ class Model(nn.Module):
             self._transformer = nn.Linear(4096, Model.NUM_CLASSES * 4)
 
         def forward(self, features: Tensor, proposal_bboxes: Tensor) -> Tuple[Tensor, Tensor]:
-            _, _, feature_map_height, feature_map_width = features.size()
+            _, _, feature_map_height, feature_map_width = features.shape
 
             pool = []
             for proposal_bbox in proposal_bboxes:

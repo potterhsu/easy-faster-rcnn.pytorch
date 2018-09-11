@@ -6,15 +6,17 @@ from torch import optim
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 
+from backbone.interface import Interface
 from dataset import Dataset
 from model import Model
 
 
-def _train(path_to_data_dir: str, path_to_checkpoints_dir: str):
+def _train(backbone_name: str, path_to_data_dir: str, path_to_checkpoints_dir: str):
     dataset = Dataset(path_to_data_dir, mode=Dataset.Mode.TRAIN)
     dataloader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=8, pin_memory=True)
 
-    model = Model().cuda()
+    backbone = Interface.from_name(backbone_name)(pretrained=True)
+    model = Model(backbone).cuda()
     optimizer = optim.SGD(model.parameters(), lr=1e-3, momentum=0.9, weight_decay=0.0005)
     scheduler = StepLR(optimizer, step_size=50000, gamma=0.1)
 
@@ -69,15 +71,17 @@ def _train(path_to_data_dir: str, path_to_checkpoints_dir: str):
 if __name__ == '__main__':
     def main():
         parser = argparse.ArgumentParser()
+        parser.add_argument('-b', '--backbone', choices=['vgg16', 'resnet101'], required=True, help='name of backbone model')
         parser.add_argument('-d', '--data_dir', default='./data', help='path to data directory')
         parser.add_argument('-c', '--checkpoints_dir', default='./checkpoints', help='directory to checkpoints directory')
         args = parser.parse_args()
 
+        backbone_name = args.backbone
         path_to_data_dir = args.data_dir
         path_to_checkpoints_dir = args.checkpoints_dir
 
         os.makedirs(path_to_checkpoints_dir, exist_ok=True)
 
-        _train(path_to_data_dir, path_to_checkpoints_dir)
+        _train(backbone_name, path_to_data_dir, path_to_checkpoints_dir)
 
     main()
