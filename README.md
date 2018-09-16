@@ -26,7 +26,7 @@ An easy implementation of Faster R-CNN in PyTorch.
 
     * **25 minutes** every 10000 steps
 
-    * **3 hours** for 70000 steps (which leads to mAP=xx.xx%)
+    * **3 hours** for 70000 steps (which leads to mAP=70.29%)
 
 * Inference
 
