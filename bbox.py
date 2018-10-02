@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch import Tensor
 
@@ -94,24 +93,3 @@ class BBox(object):
             torch.clamp(bboxes[:, 2], min=left, max=right),
             torch.clamp(bboxes[:, 3], min=top, max=bottom)
         ], dim=1)
-
-    @staticmethod
-    def generate_anchors(max_x: int, max_y: int, stride: int) -> Tensor:
-        center_based_anchor_bboxes = []
-
-        # NOTE: it's important to let `anchor_y` be the major index of list (i.e., move horizontally and then vertically) for consistency with 2D convolution
-        for anchor_y in np.arange(stride // 2, max_y // stride * stride, stride):
-            for anchor_x in np.arange(stride // 2, max_x // stride * stride, stride):
-                for ratio in [(1, 2), (1, 1), (2, 1)]:
-                    for size in [128, 256, 512]:
-                        center_x = float(anchor_x)
-                        center_y = float(anchor_y)
-                        r = ratio[0] / ratio[1]
-                        height = size * np.sqrt(r)
-                        width = size * np.sqrt(1 / r)
-                        center_based_anchor_bboxes.append([center_x, center_y, width, height])
-
-        center_based_anchor_bboxes = torch.tensor(center_based_anchor_bboxes, dtype=torch.float)
-        anchor_bboxes = BBox.from_center_base(center_based_anchor_bboxes)
-
-        return anchor_bboxes

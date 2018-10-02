@@ -4,16 +4,18 @@ import random
 from PIL import ImageDraw
 from torchvision.transforms import transforms
 
+from backbone.interface import Interface
 from bbox import BBox
 from dataset import Dataset
 from model import Model
 
 
-def _infer(path_to_input_image: str, path_to_output_image: str, path_to_checkpoint: str):
+def _infer(path_to_input_image: str, path_to_output_image: str, path_to_checkpoint: str, backbone_name: str):
     image = transforms.Image.open(path_to_input_image)
     image_tensor, scale = Dataset.preprocess(image)
 
-    model = Model().cuda()
+    backbone = Interface.from_name(backbone_name)(pretrained=False)
+    model = Model(backbone).cuda()
     model.load(path_to_checkpoint)
     bboxes, labels, probs = model.detect(image_tensor.cuda())
 
@@ -40,12 +42,14 @@ if __name__ == '__main__':
         parser.add_argument('input', type=str, help='path to input image')
         parser.add_argument('output', type=str, help='path to output result image')
         parser.add_argument('-c', '--checkpoint', help='path to checkpoint')
+        parser.add_argument('-b', '--backbone', choices=['vgg16', 'resnet101'], required=True, help='name of backbone model')
         args = parser.parse_args()
 
         path_to_input_image = args.input
         path_to_output_image = args.output
         path_to_checkpoint = args.checkpoint
+        backbone_name = args.backbone
 
-        _infer(path_to_input_image, path_to_output_image, path_to_checkpoint)
+        _infer(path_to_input_image, path_to_output_image, path_to_checkpoint, backbone_name)
 
     main()

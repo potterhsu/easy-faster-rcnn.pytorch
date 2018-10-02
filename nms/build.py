@@ -2,7 +2,6 @@ import os
 
 from torch.utils.ffi import create_extension
 
-
 ffi = create_extension(
     name='_ext.nms',
     headers=['src/nms.h'],

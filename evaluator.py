@@ -28,7 +28,6 @@ class Evaluator(object):
                 scale = scale_batch[0].item()
 
                 pred_bboxes, pred_labels, pred_probs = model.detect(image)
-
                 pred_bboxes = [[it / scale for it in bbox] for bbox in pred_bboxes]
 
                 all_pred_bboxes.extend(pred_bboxes)
