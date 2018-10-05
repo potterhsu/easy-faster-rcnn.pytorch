@@ -19,7 +19,7 @@ class Evaluator(object):
         os.makedirs(self._path_to_results_dir, exist_ok=True)
 
     def evaluate(self, model: Model) -> Dict[int, float]:
-        all_image_ids, all_pred_bboxes, all_pred_labels, all_pred_probs = [], [], [], []
+        all_image_ids, all_detection_bboxes, all_detection_labels, all_detection_probs = [], [], [], []
 
         with torch.no_grad():
             for batch_index, (image_id_batch, image_batch, scale_batch, _, _) in enumerate(tqdm(self.dataloader)):
@@ -27,15 +27,19 @@ class Evaluator(object):
                 image = image_batch[0].cuda()
                 scale = scale_batch[0].item()
 
-                pred_bboxes, pred_labels, pred_probs = model.detect(image)
-                pred_bboxes = [[it / scale for it in bbox] for bbox in pred_bboxes]
+                forward_input = Model.ForwardInput.Eval(image)
+                forward_output: Model.ForwardOutput.Eval = model.eval().forward(forward_input)
 
-                all_pred_bboxes.extend(pred_bboxes)
-                all_pred_labels.extend(pred_labels)
-                all_pred_probs.extend(pred_probs)
-                all_image_ids.extend([image_id] * len(pred_labels))
+                detection_bboxes = forward_output.detection_bboxes / scale
+                detection_labels = forward_output.detection_labels
+                detection_probs = forward_output.detection_probs
 
-        self._write_results(all_image_ids, all_pred_bboxes, all_pred_labels, all_pred_probs)
+                all_detection_bboxes.extend(detection_bboxes.tolist())
+                all_detection_labels.extend(detection_labels.tolist())
+                all_detection_probs.extend(detection_probs.tolist())
+                all_image_ids.extend([image_id] * len(detection_bboxes))
+
+        self._write_results(all_image_ids, all_detection_bboxes, all_detection_labels, all_detection_probs)
 
         path_to_voc2007_dir = os.path.join(self._path_to_data_dir, 'VOCdevkit', 'VOC2007')
         path_to_main_dir = os.path.join(path_to_voc2007_dir, 'ImageSets', 'Main')

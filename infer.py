@@ -17,15 +17,20 @@ def _infer(path_to_input_image: str, path_to_output_image: str, path_to_checkpoi
     backbone = Interface.from_name(backbone_name)(pretrained=False)
     model = Model(backbone).cuda()
     model.load(path_to_checkpoint)
-    bboxes, labels, probs = model.detect(image_tensor.cuda())
+
+    forward_input = Model.ForwardInput.Eval(image_tensor.cuda())
+    forward_output: Model.ForwardOutput.Eval = model.eval().forward(forward_input)
+
+    detection_bboxes = forward_output.detection_bboxes / scale
+    detection_labels = forward_output.detection_labels
+    detection_probs = forward_output.detection_probs
 
     draw = ImageDraw.Draw(image)
 
-    for bbox, label, prob in zip(bboxes, labels, probs):
+    for bbox, label, prob in zip(detection_bboxes.tolist(), detection_labels.tolist(), detection_probs.tolist()):
         if prob < 0.6:
             continue
 
-        bbox = [it / scale for it in bbox]
         color = random.choice(['red', 'green', 'blue', 'yellow', 'purple', 'white'])
         bbox = BBox(left=bbox[0], top=bbox[1], right=bbox[2], bottom=bbox[3])
         category = Dataset.LABEL_TO_CATEGORY_DICT[label]
