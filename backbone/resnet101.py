@@ -4,7 +4,7 @@ from torch import nn
 from backbone.interface import Interface
 
 
-class Resnet101(Interface):
+class ResNet101(Interface):
 
     def __init__(self, pretrained: bool):
         super().__init__(pretrained)

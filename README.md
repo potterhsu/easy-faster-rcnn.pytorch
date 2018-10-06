@@ -30,13 +30,13 @@ An easy implementation of Faster R-CNN in PyTorch.
         <td>0.7015</td>
     </tr>
     <tr style="color: gray;">
-        <td>Resnet-101 (freeze 0~4)</td>
+        <td>ResNet-101 (freeze 0~4)</td>
         <td>~5.4 examples/sec</td>
         <td>~11 examples/sec</td>
         <td>0.7496</td>
     </tr>
     <tr style="color: gray;">
-        <td>Resnet-101 (freeze 0~5)</td>
+        <td>ResNet-101 (freeze 0~5)</td>
         <td>~5.7 examples/sec</td>
         <td>~11 examples/sec</td>
         <td>0.7466</td>
@@ -44,7 +44,7 @@ An easy implementation of Faster R-CNN in PyTorch.
     <tr>
         <td>
             <a href="https://drive.google.com/open?id=1t-lv8bNcPnoeVru3PD3BLLMmFHsUY8u9">
-                Resnet-101 (freeze 0~6)
+                ResNet-101 (freeze 0~6)
             </a>
         </td>
         <td>~7.5 examples/sec</td>
@@ -52,7 +52,7 @@ An easy implementation of Faster R-CNN in PyTorch.
         <td>0.7523</td>
     </tr>
     <tr style="color: gray;">
-        <td>Resnet-101 (freeze 0~7)</td>
+        <td>ResNet-101 (freeze 0~7)</td>
         <td>~8.4 examples/sec</td>
         <td>~11 examples/sec</td>
         <td>0.6983</td>

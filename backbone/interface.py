@@ -9,8 +9,8 @@ class Interface(object):
             from backbone.vgg16 import Vgg16
             return Vgg16
         elif name == 'resnet101':
-            from backbone.resnet101 import Resnet101
-            return Resnet101
+            from backbone.resnet101 import ResNet101
+            return ResNet101
         else:
             raise ValueError
 
