@@ -77,7 +77,7 @@ if __name__ == '__main__':
         parser = argparse.ArgumentParser()
         parser.add_argument('-b', '--backbone', choices=['vgg16', 'resnet101'], required=True, help='name of backbone model')
         parser.add_argument('-d', '--data_dir', default='./data', help='path to data directory')
-        parser.add_argument('-c', '--checkpoints_dir', default='./checkpoints', help='directory to checkpoints directory')
+        parser.add_argument('-c', '--checkpoints_dir', default='./checkpoints', help='path to checkpoints directory')
         args = parser.parse_args()
 
         backbone_name = args.backbone
