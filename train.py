@@ -1,6 +1,7 @@
 import argparse
 import os
 import time
+from collections import deque
 
 from torch import optim
 from torch.optim.lr_scheduler import StepLR
@@ -21,18 +22,18 @@ def _train(backbone_name: str, path_to_data_dir: str, path_to_checkpoints_dir: s
     scheduler = StepLR(optimizer, step_size=50000, gamma=0.1)
 
     step = 0
-    elapsed_time = 0.0
+    time_checkpoint = time.time()
+    losses = deque(maxlen=100)
+    should_stop = False
+
     num_steps_to_display = 20
     num_steps_to_snapshot = 10000
     num_steps_to_stop_training = 70000
-    should_stop = False
 
     print('Start training')
 
     while not should_stop:
         for batch_index, (_, image_batch, _, bboxes_batch, labels_batch) in enumerate(dataloader):
-            start_time = time.time()
-
             assert image_batch.shape[0] == 1, 'only batch size of 1 is supported'
 
             image = image_batch[0].cuda()
@@ -49,13 +50,16 @@ def _train(backbone_name: str, path_to_data_dir: str, path_to_checkpoints_dir: s
             loss.backward()
             optimizer.step()
             scheduler.step()
+            losses.append(loss.item())
             step += 1
-            elapsed_time += time.time() - start_time
 
             if step % num_steps_to_display == 0:
+                elapsed_time = time.time() - time_checkpoint
+                time_checkpoint = time.time()
                 steps_per_sec = num_steps_to_display / elapsed_time
-                elapsed_time = 0.0
-                print(f'[Step {step}] Loss = {loss.item():.6f}, Learning Rate = {scheduler.get_lr()[0]} ({steps_per_sec:.2f} steps/sec)')
+                avg_loss = sum(losses) / len(losses)
+                lr = scheduler.get_lr()[0]
+                print(f'[Step {step}] Avg. Loss = {avg_loss:.6f}, Learning Rate = {lr} ({steps_per_sec:.2f} steps/sec)')
 
             if step % num_steps_to_snapshot == 0:
                 path_to_checkpoint = model.save(path_to_checkpoints_dir, step)
