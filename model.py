@@ -1,20 +1,20 @@
 import os
-import time
-from typing import Union, Tuple
+from typing import Union, Tuple, Callable, List
 
 import torch
 from torch import nn, Tensor
 from torch.nn import functional as F
+from torch.optim import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
 
-from backbone.interface import Interface as BackboneInterface
+from backbone.base import Base as BackboneBase
 from bbox import BBox
 from nms.nms import NMS
+from roi.wrapper import Wrapper as ROIWrapper
 from rpn.region_proposal_network import RegionProposalNetwork
 
 
 class Model(nn.Module):
-
-    NUM_CLASSES = 21
 
     class ForwardInput:
         class Train(object):
@@ -41,19 +41,24 @@ class Model(nn.Module):
                 self.detection_labels = detection_labels
                 self.detection_probs = detection_probs
 
-    def __init__(self, backbone: BackboneInterface):
+    def __init__(self, backbone: BackboneBase, num_classes: int, pooling_mode: ROIWrapper.Mode,
+                 anchor_ratios: List[Tuple[int, int]], anchor_sizes: List[int], pre_nms_top_n: int, post_nms_top_n: int):
         super().__init__()
 
-        self.features = backbone.features()
-        self._bn_modules = [it for it in self.features.modules() if isinstance(it, nn.BatchNorm2d)]
+        self.features, pool_handler, hidden, hidden_handler, num_features_out, num_hidden_out = backbone.features()
+        self._bn_modules = [it for it in self.features.modules() if isinstance(it, nn.BatchNorm2d)] + \
+                           [it for it in hidden.modules() if isinstance(it, nn.BatchNorm2d)]
 
-        self.rpn = RegionProposalNetwork()
-        self.detection = Model.Detection()
+        self.num_classes = num_classes
 
-        self._transformer_normalize_mean = torch.tensor([0., 0., 0., 0.], dtype=torch.float)
-        self._transformer_normalize_std = torch.tensor([.1, .1, .2, .2], dtype=torch.float)
+        self.rpn = RegionProposalNetwork(num_features_out, anchor_ratios, anchor_sizes, pre_nms_top_n, post_nms_top_n)
+        self.detection = Model.Detection(pooling_mode, pool_handler, hidden, hidden_handler, num_hidden_out, self.num_classes)
+
+        self._transformer_normalize_mean = torch.tensor([0., 0., 0., 0.], dtype=torch.float).cuda()
+        self._transformer_normalize_std = torch.tensor([.1, .1, .2, .2], dtype=torch.float).cuda()
 
     def forward(self, forward_input: Union[ForwardInput.Train, ForwardInput.Eval]) -> Union[ForwardOutput.Train, ForwardOutput.Eval]:
+        # freeze batch normalization modules for each forwarding process just in case model was switched to `train` at any time
         for bn_module in self._bn_modules:
             bn_module.eval()
             for parameter in bn_module.parameters():
@@ -84,12 +89,8 @@ class Model(nn.Module):
         return forward_output
 
     def sample(self, proposal_bboxes: Tensor, gt_classes: Tensor, gt_bboxes: Tensor):
-        proposal_bboxes = proposal_bboxes.cpu()
-        gt_classes = gt_classes.cpu()
-        gt_bboxes = gt_bboxes.cpu()
-
         # find labels for each `proposal_bboxes`
-        labels = torch.ones(len(proposal_bboxes), dtype=torch.long) * -1
+        labels = torch.ones(len(proposal_bboxes), dtype=torch.long).cuda() * -1
         ious = BBox.iou(proposal_bboxes, gt_bboxes)
         proposal_max_ious, proposal_assignments = ious.max(dim=1)
         labels[proposal_max_ious < 0.5] = 0
@@ -117,7 +118,7 @@ class Model(nn.Module):
     def loss(self, proposal_classes: Tensor, proposal_transformers: Tensor, gt_proposal_classes: Tensor, gt_proposal_transformers: Tensor):
         cross_entropy = F.cross_entropy(input=proposal_classes, target=gt_proposal_classes)
 
-        proposal_transformers = proposal_transformers.view(-1, Model.NUM_CLASSES, 4)
+        proposal_transformers = proposal_transformers.view(-1, self.num_classes, 4)
         proposal_transformers = proposal_transformers[torch.arange(end=len(proposal_transformers), dtype=torch.long).cuda(), gt_proposal_classes]
 
         fg_indices = gt_proposal_classes.nonzero().view(-1)
@@ -128,26 +129,37 @@ class Model(nn.Module):
 
         return cross_entropy, smooth_l1_loss
 
-    def save(self, path_to_checkpoints_dir: str, step: int) -> str:
-        path_to_checkpoint = os.path.join(path_to_checkpoints_dir,
-                                          'model-{:s}-{:d}.pth'.format(time.strftime('%Y%m%d%H%M'), step))
-        torch.save(self.state_dict(), path_to_checkpoint)
+    def save(self, path_to_checkpoints_dir: str, step: int, optimizer: Optimizer, scheduler: _LRScheduler) -> str:
+        path_to_checkpoint = os.path.join(path_to_checkpoints_dir, f'model-{step}.pth')
+        checkpoint = {
+            'state_dict': self.state_dict(),
+            'step': step,
+            'optimizer_state_dict': optimizer.state_dict(),
+            'scheduler_state_dict': scheduler.state_dict()
+        }
+        torch.save(checkpoint, path_to_checkpoint)
         return path_to_checkpoint
 
-    def load(self, path_to_checkpoint: str) -> 'Model':
-        self.load_state_dict(torch.load(path_to_checkpoint))
-        return self
+    def load(self, path_to_checkpoint: str, optimizer: Optimizer = None, scheduler: _LRScheduler = None) -> 'Model':
+        checkpoint = torch.load(path_to_checkpoint)
+        self.load_state_dict(checkpoint['state_dict'])
+        step = checkpoint['step']
+        if optimizer is not None:
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        if scheduler is not None:
+            scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        return step
 
     def _generate_detections(self, proposal_bboxes: Tensor, proposal_classes: Tensor, proposal_transformers: Tensor, image_width: int, image_height: int) -> Tuple[Tensor, Tensor, Tensor]:
-        proposal_transformers = proposal_transformers.view(-1, Model.NUM_CLASSES, 4)
-        mean = self._transformer_normalize_mean.repeat(1, Model.NUM_CLASSES, 1).cuda()
-        std = self._transformer_normalize_std.repeat(1, Model.NUM_CLASSES, 1).cuda()
+        proposal_transformers = proposal_transformers.view(-1, self.num_classes, 4)
+        mean = self._transformer_normalize_mean.repeat(1, self.num_classes, 1)
+        std = self._transformer_normalize_std.repeat(1, self.num_classes, 1)
 
         proposal_transformers = proposal_transformers * std - mean
-        proposal_bboxes = proposal_bboxes.view(-1, 1, 4).repeat(1, Model.NUM_CLASSES, 1)
+        proposal_bboxes = proposal_bboxes.view(-1, 1, 4).repeat(1, self.num_classes, 1)
         detection_bboxes = BBox.apply_transformer(proposal_bboxes.view(-1, 4), proposal_transformers.view(-1, 4))
 
-        detection_bboxes = detection_bboxes.view(-1, Model.NUM_CLASSES, 4)
+        detection_bboxes = detection_bboxes.view(-1, self.num_classes, 4)
 
         detection_bboxes[:, :, [0, 2]] = detection_bboxes[:, :, [0, 2]].clamp(min=0, max=image_width)
         detection_bboxes[:, :, [1, 3]] = detection_bboxes[:, :, [1, 3]].clamp(min=0, max=image_height)
@@ -161,7 +173,7 @@ class Model(nn.Module):
         generated_labels = []
         generated_probs = []
 
-        for c in range(1, Model.NUM_CLASSES):
+        for c in range(1, self.num_classes):
             detection_class_bboxes = detection_bboxes[:, c, :]
             proposal_class_probs = proposal_probs[:, c]
 
@@ -184,33 +196,22 @@ class Model(nn.Module):
 
     class Detection(nn.Module):
 
-        def __init__(self):
+        def __init__(self, pooling_mode: ROIWrapper.Mode, pool_handler: Callable[[Tensor], Tensor], hidden: nn.Module, hidden_handler: Callable[[Tensor], Tensor], num_hidden_out: int, num_classes: int):
             super().__init__()
-
-            self.fcs = nn.Sequential(
-                nn.Linear(512 * 7 * 7, 4096),
-                nn.ReLU(),
-                nn.Linear(4096, 4096),
-                nn.ReLU()
-            )
-            self._class = nn.Linear(4096, Model.NUM_CLASSES)
-            self._transformer = nn.Linear(4096, Model.NUM_CLASSES * 4)
+            self._pooling_mode = pooling_mode
+            self.pool_handler = pool_handler
+            self.hidden = hidden
+            self.hidden_handler = hidden_handler
+            self._class = nn.Linear(num_hidden_out, num_classes)
+            self._transformer = nn.Linear(num_hidden_out, num_classes * 4)
 
         def forward(self, features: Tensor, proposal_bboxes: Tensor) -> Tuple[Tensor, Tensor]:
-            _, _, feature_map_height, feature_map_width = features.shape
+            pool = ROIWrapper.apply(features, proposal_bboxes, mode=self._pooling_mode)
 
-            pool = []
-            for proposal_bbox in proposal_bboxes:
-                start_x = max(min(round(proposal_bbox[0].item() / 16), feature_map_width - 1), 0)      # [0, feature_map_width)
-                start_y = max(min(round(proposal_bbox[1].item() / 16), feature_map_height - 1), 0)     # (0, feature_map_height]
-                end_x = max(min(round(proposal_bbox[2].item() / 16) + 1, feature_map_width), 1)        # [0, feature_map_width)
-                end_y = max(min(round(proposal_bbox[3].item() / 16) + 1, feature_map_height), 1)       # (0, feature_map_height]
-                roi_feature_map = features[..., start_y:end_y, start_x:end_x]
-                pool.append(F.adaptive_max_pool2d(roi_feature_map, 7))
-            pool = torch.cat(pool, dim=0)   # pool has shape (128, 512, 7, 7)
+            pool = self.pool_handler(pool)
+            hidden = self.hidden(pool)
+            hidden = self.hidden_handler(hidden)
 
-            pool = pool.view(pool.shape[0], -1)
-            h = self.fcs(pool)
-            classes = self._class(h)
-            transformers = self._transformer(h)
+            classes = self._class(hidden)
+            transformers = self._transformer(hidden)
             return classes, transformers

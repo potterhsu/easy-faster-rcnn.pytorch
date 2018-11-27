@@ -1,6 +1,8 @@
+import os
 import time
 import unittest
 
+import numpy as np
 import torch
 
 from nms.nms import NMS
@@ -32,23 +34,23 @@ class TestNMS(unittest.TestCase):
         # self.assertListEqual(keep_indices.tolist(), [0, 2])
         self.assertListEqual(keep_indices.tolist(), [0, 1])
 
-    # def test_nms_large(self):
-    #     # detections format: [[left, top, right, bottom, score], ...], which (right, bottom) is included in area
-    #     detections = np.load(os.path.join('nms', 'test', 'nms-large-input.npy'))
-    #     bboxes = torch.FloatTensor(detections).cuda()
-    #     sorted_indices = torch.sort(bboxes[:, 4], dim=0, descending=True)[1]
-    #     bboxes = bboxes[:, 0:4][sorted_indices]
-    #
-    #     # point of (right, bottom) in our bbox definition is not included in area
-    #     bboxes[:, 2] += 1
-    #     bboxes[:, 3] += 1
-    #
-    #     keep_indices = self._run_nms(bboxes)
-    #     keep_indices_for_detection = sorted_indices[keep_indices]
-    #     self.assertEqual(len(keep_indices_for_detection), 1934)
-    #
-    #     expect = np.load(os.path.join('nms', 'test', 'nms-large-output.npy'))
-    #     self.assertListEqual(keep_indices_for_detection.tolist(), expect.tolist())
+    def test_nms_large(self):
+        # detections format: [[left, top, right, bottom, score], ...], which (right, bottom) is included in area
+        detections = np.load(os.path.join('nms', 'test', 'nms-large-input.npy'))
+        bboxes = torch.FloatTensor(detections).cuda()
+        sorted_indices = torch.sort(bboxes[:, 4], dim=0, descending=True)[1]
+        bboxes = bboxes[:, 0:4][sorted_indices]
+
+        # point of (right, bottom) in our bbox definition is not included in area
+        bboxes[:, 2] += 1
+        bboxes[:, 3] += 1
+
+        keep_indices = self._run_nms(bboxes)
+        keep_indices_for_detection = sorted_indices[keep_indices]
+        self.assertEqual(len(keep_indices_for_detection), 1934)
+
+        expect = np.load(os.path.join('nms', 'test', 'nms-large-output.npy'))
+        self.assertListEqual(keep_indices_for_detection.tolist(), expect.tolist())
 
 
 if __name__ == '__main__':

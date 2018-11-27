@@ -1,23 +1,19 @@
 import os
 import random
 import xml.etree.ElementTree as ET
-from enum import Enum
 from typing import List, Tuple
 
-import PIL
+import numpy as np
 import torch.utils.data
 from PIL import Image, ImageOps
 from torch import Tensor
-from torchvision import transforms
 
 from bbox import BBox
+from dataset.base import Base
+from voc_eval import voc_eval
 
 
-class Dataset(torch.utils.data.Dataset):
-
-    class Mode(Enum):
-        TRAIN = 'train'
-        TEST = 'test'
+class VOC2007(Base):
 
     class Annotation(object):
         class Object(object):
@@ -46,19 +42,17 @@ class Dataset(torch.utils.data.Dataset):
 
     LABEL_TO_CATEGORY_DICT = {v: k for k, v in CATEGORY_TO_LABEL_DICT.items()}
 
-    def __init__(self, path_to_data_dir: str, mode: Mode):
-        super().__init__()
+    def __init__(self, path_to_data_dir: str, mode: Base.Mode, image_min_side: float, image_max_side: float):
+        super().__init__(path_to_data_dir, mode, image_min_side, image_max_side)
 
-        self._mode = mode
-
-        path_to_voc2007_dir = os.path.join(path_to_data_dir, 'VOCdevkit', 'VOC2007')
+        path_to_voc2007_dir = os.path.join(self._path_to_data_dir, 'VOCdevkit', 'VOC2007')
         path_to_imagesets_main_dir = os.path.join(path_to_voc2007_dir, 'ImageSets', 'Main')
         path_to_annotations_dir = os.path.join(path_to_voc2007_dir, 'Annotations')
         self._path_to_jpeg_images_dir = os.path.join(path_to_voc2007_dir, 'JPEGImages')
 
-        if self._mode == Dataset.Mode.TRAIN:
+        if self._mode == VOC2007.Mode.TRAIN:
             path_to_image_ids_txt = os.path.join(path_to_imagesets_main_dir, 'trainval.txt')
-        elif self._mode == Dataset.Mode.TEST:
+        elif self._mode == VOC2007.Mode.EVAL:
             path_to_image_ids_txt = os.path.join(path_to_imagesets_main_dir, 'test.txt')
         else:
             raise ValueError('invalid mode')
@@ -73,9 +67,9 @@ class Dataset(torch.utils.data.Dataset):
             tree = ET.ElementTree(file=path_to_annotation_xml)
             root = tree.getroot()
 
-            self._image_id_to_annotation_dict[image_id] = Dataset.Annotation(
+            self._image_id_to_annotation_dict[image_id] = VOC2007.Annotation(
                 filename=next(root.iterfind('filename')).text,
-                objects=[Dataset.Annotation.Object(name=next(tag_object.iterfind('name')).text,
+                objects=[VOC2007.Annotation.Object(name=next(tag_object.iterfind('name')).text,
                                                    difficult=next(tag_object.iterfind('difficult')).text == '1',
                                                    bbox=BBox(
                                                        left=float(next(tag_object.iterfind('bndbox/xmin')).text),
@@ -94,7 +88,7 @@ class Dataset(torch.utils.data.Dataset):
         annotation = self._image_id_to_annotation_dict[image_id]
 
         bboxes = [obj.bbox.tolist() for obj in annotation.objects if not obj.difficult]
-        labels = [Dataset.CATEGORY_TO_LABEL_DICT[obj.name] for obj in annotation.objects if not obj.difficult]
+        labels = [VOC2007.CATEGORY_TO_LABEL_DICT[obj.name] for obj in annotation.objects if not obj.difficult]
 
         bboxes = torch.tensor(bboxes, dtype=torch.float)
         labels = torch.tensor(labels, dtype=torch.long)
@@ -102,43 +96,58 @@ class Dataset(torch.utils.data.Dataset):
         image = Image.open(os.path.join(self._path_to_jpeg_images_dir, annotation.filename))
 
         # random flip on only training mode
-        if self._mode == Dataset.Mode.TRAIN and random.random() > 0.5:
+        if self._mode == VOC2007.Mode.TRAIN and random.random() > 0.5:
             image = ImageOps.mirror(image)
             bboxes[:, [0, 2]] = image.width - bboxes[:, [2, 0]]  # index 0 and 2 represent `left` and `right` respectively
 
-        image, scale = Dataset.preprocess(image)
+        image, scale = VOC2007.preprocess(image, self._image_min_side, self._image_max_side)
         bboxes *= scale
 
         return image_id, image, scale, bboxes, labels
 
+    def evaluate(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], labels: List[int], probs: List[float]) -> Tuple[float, str]:
+        self._write_results(path_to_results_dir, image_ids, bboxes, labels, probs)
+
+        path_to_voc2007_dir = os.path.join(self._path_to_data_dir, 'VOCdevkit', 'VOC2007')
+        path_to_main_dir = os.path.join(path_to_voc2007_dir, 'ImageSets', 'Main')
+        path_to_annotations_dir = os.path.join(path_to_voc2007_dir, 'Annotations')
+
+        label_to_ap_dict = {}
+        for c in range(1, VOC2007.num_classes()):
+            category = VOC2007.LABEL_TO_CATEGORY_DICT[c]
+            try:
+                _, _, ap = voc_eval(detpath=os.path.join(path_to_results_dir, 'comp3_det_test_{:s}.txt'.format(category)),
+                                    annopath=os.path.join(path_to_annotations_dir, '{:s}.xml'),
+                                    imagesetfile=os.path.join(path_to_main_dir, 'test.txt'),
+                                    classname=category,
+                                    cachedir=os.path.join('caches', 'voc2007'),
+                                    ovthresh=0.5,
+                                    use_07_metric=True)
+            except IndexError:
+                ap = 0
+
+            label_to_ap_dict[c] = ap
+
+        mean_ap = np.mean([v for k, v in label_to_ap_dict.items()]).item()
+
+        detail = ''
+        for c in range(1, VOC2007.num_classes()):
+            detail += '{:d}: {:s} AP = {:.4f}\n'.format(c, VOC2007.LABEL_TO_CATEGORY_DICT[c], label_to_ap_dict[c])
+
+        return mean_ap, detail
+
+    def _write_results(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], labels: List[int], probs: List[float]):
+        label_to_txt_files_dict = {}
+        for c in range(1, VOC2007.num_classes()):
+            label_to_txt_files_dict[c] = open(os.path.join(path_to_results_dir, 'comp3_det_test_{:s}.txt'.format(VOC2007.LABEL_TO_CATEGORY_DICT[c])), 'w')
+
+        for image_id, bbox, label, prob in zip(image_ids, bboxes, labels, probs):
+            label_to_txt_files_dict[label].write('{:s} {:f} {:f} {:f} {:f} {:f}\n'.format(image_id, prob,
+                                                                                          bbox[0], bbox[1], bbox[2], bbox[3]))
+
+        for _, f in label_to_txt_files_dict.items():
+            f.close()
+
     @staticmethod
-    def preprocess(image: PIL.Image.Image) -> Tuple[Tensor, float]:
-        # resize according to the rules:
-        #   1. scale shorter edge to 600
-        #   2. after scaling, if longer edge > 1000, scale longer edge to 1000
-        scale_for_shorter_edge = 600.0 / min(image.width, image.height)
-        longer_edge_after_scaling = max(image.width, image.height) * scale_for_shorter_edge
-        scale_for_longer_edge = (1000.0 / longer_edge_after_scaling) if longer_edge_after_scaling > 1000 else 1
-        scale = scale_for_shorter_edge * scale_for_longer_edge
-
-        transform = transforms.Compose([
-            transforms.Resize((round(image.height * scale), round(image.width * scale))),  # interpolation `BILINEAR` is applied by default
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
-        image = transform(image)
-
-        return image, scale
-
-
-if __name__ == '__main__':
-    def main():
-        dataset = Dataset(path_to_data_dir='data', mode=Dataset.Mode.TRAIN)
-        image_id, image, scale, bboxes, labels = dataset[0]
-        print('image_id:', image_id)
-        print('image.shape:', image.shape)
-        print('scale:', scale)
-        print('bboxes.shape:', bboxes.shape)
-        print('labels.shape:', labels.shape)
-
-    main()
+    def num_classes() -> int:
+        return 21
