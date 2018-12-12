@@ -370,7 +370,7 @@ An easy implementation of Faster R-CNN in PyTorch.
         ```
 
 
-## Note
+## Notes
 
 * Illustration for "find labels for each `anchor_bboxes`" in `region_proposal_network.py`
 
