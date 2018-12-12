@@ -20,7 +20,7 @@ def _infer(path_to_input_image: str, path_to_output_image: str, path_to_checkpoi
     backbone = BackboneBase.from_name(backbone_name)(pretrained=False)
     model = Model(backbone, dataset_class.num_classes(), pooling_mode=Config.POOLING_MODE,
                   anchor_ratios=Config.ANCHOR_RATIOS, anchor_sizes=Config.ANCHOR_SIZES,
-                  pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N, post_nms_top_n=Config.RPN_POST_NMS_TOP_N).cuda()
+                  rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N, rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N).cuda()
     model.load(path_to_checkpoint)
 
     forward_input = Model.ForwardInput.Eval(image_tensor.cuda())

@@ -26,7 +26,7 @@ def _train(dataset_name: str, backbone_name: str, path_to_data_dir: str, path_to
     backbone = BackboneBase.from_name(backbone_name)(pretrained=True)
     model = Model(backbone, dataset.num_classes(), pooling_mode=Config.POOLING_MODE,
                   anchor_ratios=Config.ANCHOR_RATIOS, anchor_sizes=Config.ANCHOR_SIZES,
-                  pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N, post_nms_top_n=Config.RPN_POST_NMS_TOP_N).cuda()
+                  rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N, rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N).cuda()
     optimizer = optim.SGD(model.parameters(), lr=Config.LEARNING_RATE,
                           momentum=Config.MOMENTUM, weight_decay=Config.WEIGHT_DECAY)
     scheduler = StepLR(optimizer, step_size=Config.STEP_LR_SIZE, gamma=Config.STEP_LR_GAMMA)

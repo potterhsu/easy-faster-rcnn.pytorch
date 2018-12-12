@@ -42,7 +42,7 @@ class Model(nn.Module):
                 self.detection_probs = detection_probs
 
     def __init__(self, backbone: BackboneBase, num_classes: int, pooling_mode: ROIWrapper.Mode,
-                 anchor_ratios: List[Tuple[int, int]], anchor_sizes: List[int], pre_nms_top_n: int, post_nms_top_n: int):
+                 anchor_ratios: List[Tuple[int, int]], anchor_sizes: List[int], rpn_pre_nms_top_n: int, rpn_post_nms_top_n: int):
         super().__init__()
 
         self.features, pool_handler, hidden, hidden_handler, num_features_out, num_hidden_out = backbone.features()
@@ -51,7 +51,7 @@ class Model(nn.Module):
 
         self.num_classes = num_classes
 
-        self.rpn = RegionProposalNetwork(num_features_out, anchor_ratios, anchor_sizes, pre_nms_top_n, post_nms_top_n)
+        self.rpn = RegionProposalNetwork(num_features_out, anchor_ratios, anchor_sizes, rpn_pre_nms_top_n, rpn_post_nms_top_n)
         self.detection = Model.Detection(pooling_mode, pool_handler, hidden, hidden_handler, num_hidden_out, self.num_classes)
 
         self._transformer_normalize_mean = torch.tensor([0., 0., 0., 0.], dtype=torch.float).cuda()
