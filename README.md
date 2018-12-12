@@ -5,7 +5,7 @@ An easy implementation of Faster R-CNN in PyTorch.
 
 ## Demo
 
-![](https://github.com/potterhsu/easy-faster-rcnn.pytorch/blob/master/images/inference-result.jpg?raw=true)
+![](images/inference-result.jpg?raw=true)
 
 
 ## Features
@@ -285,11 +285,11 @@ An easy implementation of Faster R-CNN in PyTorch.
 
         * Result after unit testing
 
-            ![](https://github.com/potterhsu/easy-faster-rcnn.pytorch/blob/master/images/test_nms.png?raw=true)
+            ![](images/test_nms.png?raw=true)
 
         * Illustration for NMS CUDA
 
-            ![](https://github.com/potterhsu/easy-faster-rcnn.pytorch/blob/master/images/nms_cuda.png?raw=true)
+            ![](images/nms_cuda.png?raw=true)
 
     1. Build `ROI-Align` module (modified from [RoIAlign.pytorch](https://github.com/longcw/RoIAlign.pytorch))
 
@@ -368,3 +368,12 @@ An easy implementation of Faster R-CNN in PyTorch.
         ```
         $ python infer.py -c=/path/to/checkpoint.pth -s=voc2007 -b=vgg16 -p=0.9 /path/to/input/image.jpg /path/to/output/image.jpg
         ```
+
+
+## Note
+
+* Illustration for "find labels for each `anchor_bboxes`" in `region_proposal_network.py`
+
+    ![](images/rpn_find_labels_1.png)
+
+    ![](images/rpn_find_labels_2.png)
