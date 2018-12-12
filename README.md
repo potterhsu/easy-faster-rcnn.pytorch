@@ -287,10 +287,6 @@ An easy implementation of Faster R-CNN in PyTorch.
 
             ![](images/test_nms.png?raw=true)
 
-        * Illustration for NMS CUDA
-
-            ![](images/nms_cuda.png?raw=true)
-
     1. Build `ROI-Align` module (modified from [RoIAlign.pytorch](https://github.com/longcw/RoIAlign.pytorch))
 
         ```
@@ -377,3 +373,7 @@ An easy implementation of Faster R-CNN in PyTorch.
     ![](images/rpn_find_labels_1.png)
 
     ![](images/rpn_find_labels_2.png)
+
+* Illustration for NMS CUDA
+
+    ![](images/nms_cuda.png)
