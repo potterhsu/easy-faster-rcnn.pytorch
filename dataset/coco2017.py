@@ -145,8 +145,8 @@ class COCO2017(Base):
 
         return image_id, image, scale, bboxes, labels
 
-    def evaluate(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], labels: List[int], probs: List[float]) -> Tuple[float, str]:
-        self._write_results(path_to_results_dir, image_ids, bboxes, labels, probs)
+    def evaluate(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], classes: List[int], probs: List[float]) -> Tuple[float, str]:
+        self._write_results(path_to_results_dir, image_ids, bboxes, classes, probs)
 
         annType = 'bbox'
         path_to_coco_dir = os.path.join(self._path_to_data_dir, 'COCO')
@@ -171,13 +171,13 @@ class COCO2017(Base):
 
         return mean_ap, detail
 
-    def _write_results(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], labels: List[int], probs: List[float]):
+    def _write_results(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], classes: List[int], probs: List[float]):
         results = []
-        for image_id, bbox, label, prob in zip(image_ids, bboxes, labels, probs):
+        for image_id, bbox, cls, prob in zip(image_ids, bboxes, classes, probs):
             results.append(
                 {
                     'image_id': int(image_id),  # COCO evaluation requires `image_id` to be type `int`
-                    'category_id': label,
+                    'category_id': cls,
                     'bbox': [   # format [left, top, width, height] is expected
                         bbox[0],
                         bbox[1],

@@ -105,8 +105,8 @@ class VOC2007(Base):
 
         return image_id, image, scale, bboxes, labels
 
-    def evaluate(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], labels: List[int], probs: List[float]) -> Tuple[float, str]:
-        self._write_results(path_to_results_dir, image_ids, bboxes, labels, probs)
+    def evaluate(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], classes: List[int], probs: List[float]) -> Tuple[float, str]:
+        self._write_results(path_to_results_dir, image_ids, bboxes, classes, probs)
 
         path_to_voc2007_dir = os.path.join(self._path_to_data_dir, 'VOCdevkit', 'VOC2007')
         path_to_main_dir = os.path.join(path_to_voc2007_dir, 'ImageSets', 'Main')
@@ -136,16 +136,16 @@ class VOC2007(Base):
 
         return mean_ap, detail
 
-    def _write_results(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], labels: List[int], probs: List[float]):
-        label_to_txt_files_dict = {}
+    def _write_results(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], classes: List[int], probs: List[float]):
+        class_to_txt_files_dict = {}
         for c in range(1, VOC2007.num_classes()):
-            label_to_txt_files_dict[c] = open(os.path.join(path_to_results_dir, 'comp3_det_test_{:s}.txt'.format(VOC2007.LABEL_TO_CATEGORY_DICT[c])), 'w')
+            class_to_txt_files_dict[c] = open(os.path.join(path_to_results_dir, 'comp3_det_test_{:s}.txt'.format(VOC2007.LABEL_TO_CATEGORY_DICT[c])), 'w')
 
-        for image_id, bbox, label, prob in zip(image_ids, bboxes, labels, probs):
-            label_to_txt_files_dict[label].write('{:s} {:f} {:f} {:f} {:f} {:f}\n'.format(image_id, prob,
-                                                                                          bbox[0], bbox[1], bbox[2], bbox[3]))
+        for image_id, bbox, cls, prob in zip(image_ids, bboxes, classes, probs):
+            class_to_txt_files_dict[cls].write('{:s} {:f} {:f} {:f} {:f} {:f}\n'.format(image_id, prob,
+                                                                                        bbox[0], bbox[1], bbox[2], bbox[3]))
 
-        for _, f in label_to_txt_files_dict.items():
+        for _, f in class_to_txt_files_dict.items():
             f.close()
 
     @staticmethod

@@ -27,18 +27,18 @@ def _infer(path_to_input_image: str, path_to_output_image: str, path_to_checkpoi
     forward_output: Model.ForwardOutput.Eval = model.eval().forward(forward_input)
 
     detection_bboxes = forward_output.detection_bboxes / scale
-    detection_labels = forward_output.detection_labels
+    detection_classes = forward_output.detection_classes
     detection_probs = forward_output.detection_probs
 
     draw = ImageDraw.Draw(image)
 
-    for bbox, label, prob in zip(detection_bboxes.tolist(), detection_labels.tolist(), detection_probs.tolist()):
+    for bbox, cls, prob in zip(detection_bboxes.tolist(), detection_classes.tolist(), detection_probs.tolist()):
         if prob < prob_thresh:
             continue
 
         color = random.choice(['red', 'green', 'blue', 'yellow', 'purple', 'white'])
         bbox = BBox(left=bbox[0], top=bbox[1], right=bbox[2], bottom=bbox[3])
-        category = dataset_class.LABEL_TO_CATEGORY_DICT[label]
+        category = dataset_class.LABEL_TO_CATEGORY_DICT[cls]
 
         draw.rectangle(((bbox.left, bbox.top), (bbox.right, bbox.bottom)), outline=color)
         draw.text((bbox.left, bbox.top), text=f'{category:s} {prob:.3f}', fill=color)

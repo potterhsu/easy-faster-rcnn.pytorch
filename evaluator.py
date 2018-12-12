@@ -17,7 +17,7 @@ class Evaluator(object):
         self._path_to_results_dir = path_to_results_dir
 
     def evaluate(self, model: Model) -> Tuple[float, str]:
-        all_image_ids, all_detection_bboxes, all_detection_labels, all_detection_probs = [], [], [], []
+        all_image_ids, all_detection_bboxes, all_detection_classes, all_detection_probs = [], [], [], []
 
         with torch.no_grad():
             for batch_index, (image_id_batch, image_batch, scale_batch, _, _) in enumerate(tqdm(self._dataloader)):
@@ -29,18 +29,18 @@ class Evaluator(object):
                 forward_output: Model.ForwardOutput.Eval = model.eval().forward(forward_input)
 
                 detection_bboxes = forward_output.detection_bboxes / scale
-                detection_labels = forward_output.detection_labels
+                detection_classes = forward_output.detection_classes
                 detection_probs = forward_output.detection_probs
 
                 selected_indices = (detection_probs > 0.05).nonzero().view(-1)
                 detection_bboxes = detection_bboxes[selected_indices]
-                detection_labels = detection_labels[selected_indices]
+                detection_classes = detection_classes[selected_indices]
                 detection_probs = detection_probs[selected_indices]
 
                 all_detection_bboxes.extend(detection_bboxes.tolist())
-                all_detection_labels.extend(detection_labels.tolist())
+                all_detection_classes.extend(detection_classes.tolist())
                 all_detection_probs.extend(detection_probs.tolist())
                 all_image_ids.extend([image_id] * len(detection_bboxes))
 
-        mean_ap, detail = self._dataset.evaluate(self._path_to_results_dir, all_image_ids, all_detection_bboxes, all_detection_labels, all_detection_probs)
+        mean_ap, detail = self._dataset.evaluate(self._path_to_results_dir, all_image_ids, all_detection_bboxes, all_detection_classes, all_detection_probs)
         return mean_ap, detail

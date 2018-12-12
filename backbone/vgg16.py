@@ -53,5 +53,3 @@ class Vgg16(backbone.base.Base):
 
     def hidden_handler(self, hidden: Tensor) -> Tensor:
         return hidden
-
-

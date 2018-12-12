@@ -39,10 +39,10 @@ class Base(torch.utils.data.dataset.Dataset):
     def __getitem__(self, index: int) -> Tuple[str, Tensor, float, Tensor, Tensor]:
         raise NotImplementedError
 
-    def evaluate(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], labels: List[int], probs: List[float]) -> Tuple[float, str]:
+    def evaluate(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], classes: List[int], probs: List[float]) -> Tuple[float, str]:
         raise NotImplementedError
 
-    def _write_results(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], labels: List[int], probs: List[float]):
+    def _write_results(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], classes: List[int], probs: List[float]):
         raise NotImplementedError
 
     @staticmethod

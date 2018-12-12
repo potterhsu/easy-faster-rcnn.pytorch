@@ -36,9 +36,9 @@ class Model(nn.Module):
                 self.proposal_transformer_loss = proposal_transformer_loss
 
         class Eval(object):
-            def __init__(self, detection_bboxes: Tensor, detection_labels: Tensor, detection_probs: Tensor):
+            def __init__(self, detection_bboxes: Tensor, detection_classes: Tensor, detection_probs: Tensor):
                 self.detection_bboxes = detection_bboxes
-                self.detection_labels = detection_labels
+                self.detection_classes = detection_classes
                 self.detection_probs = detection_probs
 
     def __init__(self, backbone: BackboneBase, num_classes: int, pooling_mode: ROIWrapper.Mode,
@@ -83,8 +83,8 @@ class Model(nn.Module):
             forward_output = Model.ForwardOutput.Train(anchor_objectness_loss, anchor_transformer_loss, proposal_class_loss, proposal_transformer_loss)
         else:
             proposal_classes, proposal_transformers = self.detection.forward(features, proposal_bboxes)
-            detection_bboxes, detection_labels, detection_probs = self._generate_detections(proposal_bboxes, proposal_classes, proposal_transformers, image_width, image_height)
-            forward_output = Model.ForwardOutput.Eval(detection_bboxes, detection_labels, detection_probs)
+            detection_bboxes, detection_classes, detection_probs = self._generate_detections(proposal_bboxes, proposal_classes, proposal_transformers, image_width, image_height)
+            forward_output = Model.ForwardOutput.Eval(detection_bboxes, detection_classes, detection_probs)
 
         return forward_output
 
@@ -170,7 +170,7 @@ class Model(nn.Module):
         proposal_probs = proposal_probs.cpu()
 
         generated_bboxes = []
-        generated_labels = []
+        generated_classes = []
         generated_probs = []
 
         for c in range(1, self.num_classes):
@@ -186,13 +186,13 @@ class Model(nn.Module):
             proposal_class_probs = proposal_class_probs[keep_indices]
 
             generated_bboxes.append(detection_class_bboxes)
-            generated_labels.append(torch.ones(len(keep_indices)) * c)
+            generated_classes.append(torch.ones(len(keep_indices)) * c)
             generated_probs.append(proposal_class_probs)
 
         generated_bboxes = torch.cat(generated_bboxes, dim=0)
-        generated_labels = torch.cat(generated_labels, dim=0)
+        generated_classes = torch.cat(generated_classes, dim=0)
         generated_probs = torch.cat(generated_probs, dim=0)
-        return generated_bboxes, generated_labels, generated_probs
+        return generated_bboxes, generated_classes, generated_probs
 
     class Detection(nn.Module):
 
