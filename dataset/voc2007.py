@@ -112,7 +112,7 @@ class VOC2007(Base):
         path_to_main_dir = os.path.join(path_to_voc2007_dir, 'ImageSets', 'Main')
         path_to_annotations_dir = os.path.join(path_to_voc2007_dir, 'Annotations')
 
-        label_to_ap_dict = {}
+        class_to_ap_dict = {}
         for c in range(1, VOC2007.num_classes()):
             category = VOC2007.LABEL_TO_CATEGORY_DICT[c]
             try:
@@ -126,13 +126,13 @@ class VOC2007(Base):
             except IndexError:
                 ap = 0
 
-            label_to_ap_dict[c] = ap
+            class_to_ap_dict[c] = ap
 
-        mean_ap = np.mean([v for k, v in label_to_ap_dict.items()]).item()
+        mean_ap = np.mean([v for k, v in class_to_ap_dict.items()]).item()
 
         detail = ''
         for c in range(1, VOC2007.num_classes()):
-            detail += '{:d}: {:s} AP = {:.4f}\n'.format(c, VOC2007.LABEL_TO_CATEGORY_DICT[c], label_to_ap_dict[c])
+            detail += '{:d}: {:s} AP = {:.4f}\n'.format(c, VOC2007.LABEL_TO_CATEGORY_DICT[c], class_to_ap_dict[c])
 
         return mean_ap, detail
 
