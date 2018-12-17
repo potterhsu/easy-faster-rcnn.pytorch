@@ -33,14 +33,44 @@ An easy implementation of Faster R-CNN in PyTorch.
             <th>Training Speed (FPS)</th>
             <th>Inference Speed (FPS)</th>
             <th>mAP</th>
+            <th>image_min_side</th>
+            <th>image_max_side</th>
+            <th>anchor_ratios</th>
+            <th>anchor_sizes</th>
+            <th>pooling_mode</th>
+            <th>train_pre_rpn_nms_top_n</th>
+            <th>train_post_rpn_nms_top_n</th>
+            <th>eval_pre_rpn_nms_top_n</th>
+            <th>eval_post_rpn_nms_top_n</th>
+            <th>learning_rate</th>
+            <th>momentum</th>
+            <th>weight_decay</th>
+            <th>step_lr_size</th>
+            <th>step_lr_gamma</th>
+            <th>num_steps_to_finish</th>
         </tr>
         <tr>
             <td>Original Paper</td>
             <td>VGG-16</td>
             <td>Tesla K40</td>
-            <td>N/A</td>
+            <td>-</td>
             <td>~ 5</td>
             <td>0.699</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
         </tr>
         <tr>
             <td>chenyuntc/simple-faster-rcnn-pytorch</td>
@@ -49,26 +79,71 @@ An easy implementation of Faster R-CNN in PyTorch.
             <td>~ 6.5</td>
             <td>~ 14.4</td>
             <td>0.712</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
         </tr>
         <tr>
             <td>ruotianluo/pytorch-faster-rcnn</td>
             <td>VGG-16</td>
             <td>TITAN Xp</td>
-            <td>N/A</td>
-            <td>N/A</td>
+            <td>-</td>
+            <td>-</td>
             <td>0.7122</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
         </tr>
         <tr>
             <td>jwyang/faster-rcnn.pytorch</td>
             <td>VGG-16</td>
             <td>TITAN Xp</td>
-            <td>N/A</td>
-            <td>N/A</td>
+            <td>-</td>
+            <td>-</td>
             <td>0.701</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
         </tr>
         <tr>
             <td>
-                <a href="https://drive.google.com/drive/folders/1SKNPzSPFlLL_Y2XhRt6rA0d28Jh6Sy-4?usp=sharing">
+                <a href="https://drive.google.com/open?id=1SKNPzSPFlLL_Y2XhRt6rA0d28Jh6Sy-4">
                     Ours
                 </a>
             </td>
@@ -77,26 +152,71 @@ An easy implementation of Faster R-CNN in PyTorch.
             <td>~ 6.9</td>
             <td>~ 15.5</td>
             <td>0.7013</td>
+            <td>600</td>
+            <td>1000</td>
+            <td>[(1, 2), (1, 1), (2, 1)]</td>
+            <td>[128, 256, 512]</td>
+            <td>align</td>
+            <td>12000</td>
+            <td>2000</td>
+            <td>6000</td>
+            <td>300</td>
+            <td>0.001</td>
+            <td>0.9</td>
+            <td>0.0005</td>
+            <td>50000</td>
+            <td>0.1</td>
+            <td>70000</td>
         </tr>
         <tr>
             <td>ruotianluo/pytorch-faster-rcnn</td>
             <td>ResNet-101</td>
             <td>TITAN Xp</td>
-            <td>N/A</td>
-            <td>N/A</td>
+            <td>-</td>
+            <td>-</td>
             <td>0.7576</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
         </tr>
         <tr>
             <td>jwyang/faster-rcnn.pytorch</td>
             <td>ResNet-101</td>
             <td>TITAN Xp</td>
-            <td>N/A</td>
-            <td>N/A</td>
+            <td>-</td>
+            <td>-</td>
             <td>0.752</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
         </tr>
         <tr>
             <td>
-                <a href="https://drive.google.com/drive/folders/1HCefw8-4eCC5MVz07bhROjFBvt4SKRGD?usp=sharing">
+                <a href="https://drive.google.com/open?id=1HCefw8-4eCC5MVz07bhROjFBvt4SKRGD">
                     Ours
                 </a>
             </td>
@@ -105,6 +225,21 @@ An easy implementation of Faster R-CNN in PyTorch.
             <td>~ 5.6</td>
             <td>~ 11.7</td>
             <td>0.7538</td>
+            <td>600</td>
+            <td>1000</td>
+            <td>[(1, 2), (1, 1), (2, 1)]</td>
+            <td>[128, 256, 512]</td>
+            <td>align</td>
+            <td>12000</td>
+            <td>2000</td>
+            <td>6000</td>
+            <td>300</td>
+            <td>0.001</td>
+            <td>0.9</td>
+            <td>0.0005</td>
+            <td>50000</td>
+            <td>0.1</td>
+            <td>70000</td>
         </tr>
     </table>
 
@@ -122,26 +257,71 @@ An easy implementation of Faster R-CNN in PyTorch.
             <th>Training Speed (FPS)</th>
             <th>Inference Speed (FPS)</th>
             <th>AP@[.5:.95]</th>
+            <th>image_min_side</th>
+            <th>image_max_side</th>
+            <th>anchor_ratios</th>
+            <th>anchor_sizes</th>
+            <th>pooling_mode</th>
+            <th>train_pre_rpn_nms_top_n</th>
+            <th>train_post_rpn_nms_top_n</th>
+            <th>eval_pre_rpn_nms_top_n</th>
+            <th>eval_post_rpn_nms_top_n</th>
+            <th>learning_rate</th>
+            <th>momentum</th>
+            <th>weight_decay</th>
+            <th>step_lr_size</th>
+            <th>step_lr_gamma</th>
+            <th>num_steps_to_finish</th>
         </tr>
         <tr>
             <td>ruotianluo/pytorch-faster-rcnn</td>
             <td>VGG-16</td>
             <td>TITAN Xp</td>
-            <td>N/A</td>
-            <td>N/A</td>
+            <td>-</td>
+            <td>-</td>
             <td>0.301</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
         </tr>
         <tr>
             <td>jwyang/faster-rcnn.pytorch</td>
             <td>VGG-16</td>
             <td>TITAN Xp</td>
-            <td>N/A</td>
-            <td>N/A</td>
+            <td>-</td>
+            <td>-</td>
             <td>0.292</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
         </tr>
         <tr>
             <td>
-                <a href="https://drive.google.com/drive/folders/1_2X_Sn311f-hs9S0bVyMmeCsE9NppQHI?usp=sharing">
+                <a href="https://drive.google.com/open?id=1_2X_Sn311f-hs9S0bVyMmeCsE9NppQHI">
                     Ours
                 </a>
             </td>
@@ -150,26 +330,71 @@ An easy implementation of Faster R-CNN in PyTorch.
             <td>~ 3.9</td>
             <td>~ 6.5</td>
             <td>0.287</td>
+            <td>800</td>
+            <td>1333</td>
+            <td>[(1, 2), (1, 1), (2, 1)]</td>
+            <td>[64, 128, 256, 512]</td>
+            <td>align</td>
+            <td>12000</td>
+            <td>2000</td>
+            <td>6000</td>
+            <td>1000</td>
+            <td>0.001</td>
+            <td>0.9</td>
+            <td>0.0001</td>
+            <td>900000</td>
+            <td>0.1</td>
+            <td>1200000</td>
         </tr>
         <tr>
             <td>ruotianluo/pytorch-faster-rcnn</td>
             <td>ResNet-101</td>
             <td>TITAN Xp</td>
-            <td>N/A</td>
-            <td>N/A</td>
+            <td>-</td>
+            <td>-</td>
             <td>0.354</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
         </tr>
         <tr>
             <td>jwyang/faster-rcnn.pytorch</td>
             <td>ResNet-101</td>
             <td>TITAN Xp</td>
-            <td>N/A</td>
-            <td>N/A</td>
+            <td>-</td>
+            <td>-</td>
             <td>0.370</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
         </tr>
         <tr>
             <td>
-                <a href="https://drive.google.com/drive/folders/16VyI2GjLrf3uU_bhqvZpC4ZGpen0wS5d?usp=sharing">
+                <a href="https://drive.google.com/open?id=16VyI2GjLrf3uU_bhqvZpC4ZGpen0wS5d">
                     Ours
                 </a>
             </td>
@@ -178,6 +403,48 @@ An easy implementation of Faster R-CNN in PyTorch.
             <td>~ 3.4</td>
             <td>~ 5.4</td>
             <td>0.352</td>
+            <td>800</td>
+            <td>1333</td>
+            <td>[(1, 2), (1, 1), (2, 1)]</td>
+            <td>[64, 128, 256, 512]</td>
+            <td>align</td>
+            <td>12000</td>
+            <td>2000</td>
+            <td>6000</td>
+            <td>1000</td>
+            <td>0.001</td>
+            <td>0.9</td>
+            <td>0.0001</td>
+            <td>900000</td>
+            <td>0.1</td>
+            <td>1200000</td>
+        </tr>
+        <tr>
+            <td>
+                <a href="https://drive.google.com/open?id=15GsaYxwpo-4mWKxPIkW_C-GXeeKmNNoz">
+                    Ours
+                </a>
+            </td>
+            <td>ResNet-101</td>
+            <td>GTX 1080 Ti</td>
+            <td>~ 2.6</td>
+            <td>~ 3.6</td>
+            <td>0.358</td>
+            <td>800</td>
+            <td>1333</td>
+            <td>[(1, 2), (1, 1), (2, 1)]</td>
+            <td>[32, 64, 128, 256, 512]</td>
+            <td>align</td>
+            <td>12000</td>
+            <td>2000</td>
+            <td>6000</td>
+            <td>1000</td>
+            <td>0.001</td>
+            <td>0.9</td>
+            <td>0.0001</td>
+            <td>900000</td>
+            <td>0.1</td>
+            <td>1200000</td>
         </tr>
     </table>
 
