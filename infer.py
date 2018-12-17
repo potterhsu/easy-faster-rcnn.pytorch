@@ -78,6 +78,11 @@ if __name__ == '__main__':
                      anchor_ratios=args.anchor_ratios, anchor_sizes=args.anchor_sizes, pooling_mode=args.pooling_mode,
                      rpn_pre_nms_top_n=args.rpn_pre_nms_top_n, rpn_post_nms_top_n=args.rpn_post_nms_top_n)
 
+        print('Arguments:')
+        for k, v in vars(args).items():
+            print(f'\t{k} = {v}')
+        print(Config.describe())
+
         _infer(path_to_input_image, path_to_output_image, path_to_checkpoint, dataset_name, backbone_name, prob_thresh)
 
     main()
