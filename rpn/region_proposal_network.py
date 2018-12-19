@@ -45,8 +45,8 @@ class RegionProposalNetwork(nn.Module):
         proposal_bboxes = self._generate_proposals(anchor_bboxes, objectnesses, transformers, image_width, image_height)
 
         proposal_bboxes = proposal_bboxes[:self._pre_nms_top_n]
-        keep_indices = NMS.suppress(proposal_bboxes, threshold=0.7)
-        proposal_bboxes = proposal_bboxes[keep_indices]
+        kept_indices = NMS.suppress(proposal_bboxes, threshold=0.7)
+        proposal_bboxes = proposal_bboxes[kept_indices]
         proposal_bboxes = proposal_bboxes[:self._post_nms_top_n]
 
         return anchor_bboxes, objectnesses, transformers, proposal_bboxes
@@ -79,10 +79,10 @@ class RegionProposalNetwork(nn.Module):
         bg_indices = (labels == 0).nonzero().view(-1)
         fg_indices = fg_indices[torch.randperm(len(fg_indices))[:min(len(fg_indices), 128)]]
         bg_indices = bg_indices[torch.randperm(len(bg_indices))[:256 - len(fg_indices)]]
-        select_indices = torch.cat([fg_indices, bg_indices])
-        select_indices = select_indices[torch.randperm(len(select_indices))]
+        selected_indices = torch.cat([fg_indices, bg_indices])
+        selected_indices = selected_indices[torch.randperm(len(selected_indices))]
 
-        gt_anchor_objectnesses = labels[select_indices]
+        gt_anchor_objectnesses = labels[selected_indices]
         gt_bboxes = gt_bboxes[anchor_assignments[fg_indices]]
         anchor_bboxes = anchor_bboxes[fg_indices]
         gt_anchor_transformers = BBox.calc_transformer(anchor_bboxes, gt_bboxes)
@@ -90,7 +90,7 @@ class RegionProposalNetwork(nn.Module):
         gt_anchor_objectnesses = gt_anchor_objectnesses.cuda()
         gt_anchor_transformers = gt_anchor_transformers.cuda()
 
-        anchor_objectnesses = anchor_objectnesses[select_indices]
+        anchor_objectnesses = anchor_objectnesses[selected_indices]
         anchor_transformers = anchor_transformers[fg_indices]
 
         return anchor_objectnesses, anchor_transformers, gt_anchor_objectnesses, gt_anchor_transformers

@@ -44,10 +44,10 @@ def _realtime(path_to_input_stream_endpoint: str, period_of_inference: int, path
         detection_classes = forward_output.detection_classes
         detection_probs = forward_output.detection_probs
 
-        keep_indices = detection_probs > prob_thresh
-        detection_bboxes = detection_bboxes[keep_indices]
-        detection_classes = detection_classes[keep_indices]
-        detection_probs = detection_probs[keep_indices]
+        kept_indices = detection_probs > prob_thresh
+        detection_bboxes = detection_bboxes[kept_indices]
+        detection_classes = detection_classes[kept_indices]
+        detection_probs = detection_probs[kept_indices]
 
         draw = ImageDraw.Draw(image)
 

@@ -101,12 +101,12 @@ class Model(nn.Module):
         bg_indices = (labels == 0).nonzero().view(-1)
         fg_indices = fg_indices[torch.randperm(len(fg_indices))[:min(len(fg_indices), 32)]]
         bg_indices = bg_indices[torch.randperm(len(bg_indices))[:128 - len(fg_indices)]]
-        select_indices = torch.cat([fg_indices, bg_indices])
-        select_indices = select_indices[torch.randperm(len(select_indices))]
+        selected_indices = torch.cat([fg_indices, bg_indices])
+        selected_indices = selected_indices[torch.randperm(len(selected_indices))]
 
-        proposal_bboxes = proposal_bboxes[select_indices]
-        gt_proposal_transformers = BBox.calc_transformer(proposal_bboxes, gt_bboxes[proposal_assignments[select_indices]])
-        gt_proposal_classes = labels[select_indices]
+        proposal_bboxes = proposal_bboxes[selected_indices]
+        gt_proposal_transformers = BBox.calc_transformer(proposal_bboxes, gt_bboxes[proposal_assignments[selected_indices]])
+        gt_proposal_classes = labels[selected_indices]
 
         gt_proposal_transformers = (gt_proposal_transformers - self._transformer_normalize_mean) / self._transformer_normalize_std
 
@@ -181,12 +181,12 @@ class Model(nn.Module):
             detection_class_bboxes = detection_class_bboxes[sorted_indices]
             proposal_class_probs = proposal_class_probs[sorted_indices]
 
-            keep_indices = NMS.suppress(detection_class_bboxes.cuda(), threshold=0.3)
-            detection_class_bboxes = detection_class_bboxes[keep_indices]
-            proposal_class_probs = proposal_class_probs[keep_indices]
+            kept_indices = NMS.suppress(detection_class_bboxes.cuda(), threshold=0.3)
+            detection_class_bboxes = detection_class_bboxes[kept_indices]
+            proposal_class_probs = proposal_class_probs[kept_indices]
 
             generated_bboxes.append(detection_class_bboxes)
-            generated_classes.append(torch.ones(len(keep_indices)) * c)
+            generated_classes.append(torch.ones(len(kept_indices)) * c)
             generated_probs.append(proposal_class_probs)
 
         generated_bboxes = torch.cat(generated_bboxes, dim=0)
