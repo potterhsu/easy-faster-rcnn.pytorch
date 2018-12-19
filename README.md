@@ -459,6 +459,12 @@ An easy implementation of Faster R-CNN in PyTorch.
     $ pip install tqdm
     ```
 
+* tensorboardX
+
+    ```
+    $ pip install tensorboardX
+    ```
+
 
 ## Setup
 

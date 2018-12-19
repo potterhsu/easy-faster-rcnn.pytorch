@@ -1,10 +1,11 @@
 import argparse
 import os
 import time
+import uuid
 from collections import deque
 from typing import Optional
 
-import uuid
+from tensorboardX import SummaryWriter
 from torch import optim
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
@@ -34,6 +35,7 @@ def _train(dataset_name: str, backbone_name: str, path_to_data_dir: str, path_to
     step = 0
     time_checkpoint = time.time()
     losses = deque(maxlen=100)
+    summary_writer = SummaryWriter(os.path.join(path_to_checkpoints_dir, 'summaries'))
     should_stop = False
 
     num_steps_to_display = Config.NUM_STEPS_TO_DISPLAY
@@ -57,14 +59,22 @@ def _train(dataset_name: str, backbone_name: str, path_to_data_dir: str, path_to
             forward_input = Model.ForwardInput.Train(image, gt_classes=labels, gt_bboxes=bboxes)
             forward_output: Model.ForwardOutput.Train = model.train().forward(forward_input)
 
-            loss = forward_output.anchor_objectness_loss + forward_output.anchor_transformer_loss + \
-                forward_output.proposal_class_loss + forward_output.proposal_transformer_loss
+            anchor_objectness_loss = forward_output.anchor_objectness_loss
+            anchor_transformer_loss = forward_output.anchor_transformer_loss
+            proposal_class_loss = forward_output.proposal_class_loss
+            proposal_transformer_loss = forward_output.proposal_transformer_loss
+            loss = anchor_objectness_loss + anchor_transformer_loss + proposal_class_loss + proposal_transformer_loss
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             scheduler.step()
             losses.append(loss.item())
+            summary_writer.add_scalar('train/anchor_objectness_loss', anchor_objectness_loss.item(), step)
+            summary_writer.add_scalar('train/anchor_transformer_loss', anchor_transformer_loss.item(), step)
+            summary_writer.add_scalar('train/proposal_class_loss', proposal_class_loss.item(), step)
+            summary_writer.add_scalar('train/proposal_transformer_loss', proposal_transformer_loss.item(), step)
+            summary_writer.add_scalar('train/loss', loss.item(), step)
             step += 1
 
             if step == num_steps_to_finish:
