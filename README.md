@@ -243,6 +243,7 @@ An easy implementation of Faster R-CNN in PyTorch.
         </tr>
     </table>
 
+    > Scroll to right for more configurations
 
 * MS COCO 2017
 
@@ -447,6 +448,9 @@ An easy implementation of Faster R-CNN in PyTorch.
             <td>1200000</td>
         </tr>
     </table>
+    
+    > Scroll to right for more configurations
+    
 
 ## Requirements
 
