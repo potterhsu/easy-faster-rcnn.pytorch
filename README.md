@@ -149,8 +149,8 @@ An easy implementation of Faster R-CNN in PyTorch.
             </td>
             <td>VGG-16</td>
             <td>GTX 1080 Ti</td>
-            <td>~ 6.9</td>
-            <td>~ 15.5</td>
+            <td>~ 7.6</td>
+            <td>~ 17.6</td>
             <td>0.7013</td>
             <td>600</td>
             <td>1000</td>
@@ -222,8 +222,8 @@ An easy implementation of Faster R-CNN in PyTorch.
             </td>
             <td>ResNet-101</td>
             <td>GTX 1080 Ti</td>
-            <td>~ 5.6</td>
-            <td>~ 11.7</td>
+            <td>~ 6.3</td>
+            <td>~ 11.8</td>
             <td>0.7538</td>
             <td>600</td>
             <td>1000</td>
@@ -328,8 +328,8 @@ An easy implementation of Faster R-CNN in PyTorch.
             </td>
             <td>VGG-16</td>
             <td>GTX 1080 Ti</td>
-            <td>~ 3.9</td>
-            <td>~ 6.5</td>
+            <td>~ 5.1</td>
+            <td>~ 8.9</td>
             <td>0.287</td>
             <td>800</td>
             <td>1333</td>
@@ -401,8 +401,8 @@ An easy implementation of Faster R-CNN in PyTorch.
             </td>
             <td>ResNet-101</td>
             <td>GTX 1080 Ti</td>
-            <td>~ 3.4</td>
-            <td>~ 5.4</td>
+            <td>~ 4.7</td>
+            <td>~ 7.8</td>
             <td>0.352</td>
             <td>800</td>
             <td>1333</td>
@@ -428,8 +428,8 @@ An easy implementation of Faster R-CNN in PyTorch.
             </td>
             <td>ResNet-101</td>
             <td>GTX 1080 Ti</td>
-            <td>~ 2.6</td>
-            <td>~ 3.6</td>
+            <td>~ 4.5</td>
+            <td>~ 7.5</td>
             <td>0.358</td>
             <td>800</td>
             <td>1333</td>

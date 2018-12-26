@@ -33,7 +33,9 @@ class RegionProposalNetwork(nn.Module):
         self._transformer = nn.Conv2d(in_channels=512, out_channels=num_anchors * 4, kernel_size=1)
 
     def forward(self, features: Tensor, image_width: int, image_height: int) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
-        anchor_bboxes = self._generate_anchors(image_width, image_height, num_x_anchors=features.shape[3], num_y_anchors=features.shape[2]).cuda()
+        anchor_bboxes = self._generate_anchors(image_width, image_height,
+                                               num_x_anchors=features.shape[3], num_y_anchors=features.shape[2],
+                                               anchor_ratios=self._anchor_ratios, anchor_sizes=self._anchor_sizes).cuda()
 
         features = self._features(features)
         objectnesses = self._objectness(features)
@@ -104,22 +106,28 @@ class RegionProposalNetwork(nn.Module):
 
         return cross_entropy, smooth_l1_loss
 
-    def _generate_anchors(self, image_width: int, image_height: int, num_x_anchors: int, num_y_anchors: int) -> Tensor:
-        center_based_anchor_bboxes = []
+    def _generate_anchors(self, image_width: int, image_height: int, num_x_anchors: int, num_y_anchors: int, anchor_ratios: List[Tuple[int, int]], anchor_sizes: List[int]) -> Tensor:
+        center_ys = np.linspace(start=0, stop=image_height, num=num_y_anchors + 2)[1:-1]
+        center_xs = np.linspace(start=0, stop=image_width, num=num_x_anchors + 2)[1:-1]
+        ratios = np.array(anchor_ratios)
+        ratios = ratios[:, 0] / ratios[:, 1]
+        sizes = np.array(anchor_sizes)
 
-        # NOTE: it's important to let `anchor_y` be the major index of list (i.e., move horizontally and then vertically) for consistency with 2D convolution
-        for anchor_y in np.linspace(start=0, stop=image_height, num=num_y_anchors + 2)[1:-1]:    # remove anchor at vertical boundary
-            for anchor_x in np.linspace(start=0, stop=image_width, num=num_x_anchors + 2)[1:-1]:  # remove anchor at horizontal boundary
-                for ratio in self._anchor_ratios:
-                    for size in self._anchor_sizes:
-                        center_x = float(anchor_x)
-                        center_y = float(anchor_y)
-                        r = ratio[0] / ratio[1]
-                        height = size * np.sqrt(r)
-                        width = size * np.sqrt(1 / r)
-                        center_based_anchor_bboxes.append([center_x, center_y, width, height])
+        # NOTE: it's important to let `center_ys` be the major index (i.e., move horizontally and then vertically) for consistency with 2D convolution
 
-        center_based_anchor_bboxes = torch.tensor(center_based_anchor_bboxes, dtype=torch.float)
+        # giving the string 'ij' returns a meshgrid with matrix indexing, i.e., with shape (#center_ys, #center_xs, #ratios)
+        center_ys, center_xs, ratios, sizes = np.meshgrid(center_ys, center_xs, ratios, sizes, indexing='ij')
+
+        center_ys = center_ys.reshape(-1)
+        center_xs = center_xs.reshape(-1)
+        ratios = ratios.reshape(-1)
+        sizes = sizes.reshape(-1)
+
+        widths = sizes * np.sqrt(1 / ratios)
+        heights = sizes * np.sqrt(ratios)
+
+        center_based_anchor_bboxes = np.stack((center_xs, center_ys, widths, heights), axis=1)
+        center_based_anchor_bboxes = torch.from_numpy(center_based_anchor_bboxes).float()
         anchor_bboxes = BBox.from_center_base(center_based_anchor_bboxes)
 
         return anchor_bboxes
