@@ -12,7 +12,7 @@ An easy implementation of Faster R-CNN in PyTorch.
 
 * Supports PyTorch 0.4.1
 * Supports `PASCAL VOC 2007` and `MS COCO 2017` datasets
-* Supports `VGG 16` and `ResNet 101` backbones (from official PyTorch model)
+* Supports `VGG-16`, `ResNet-18`, `ResNet-50` and `ResNet-101` backbones (from official PyTorch model)
 * Supports `ROI Pooling` and `ROI Align` pooling modes
 * Matches the performance reported by the original paper
 * It's efficient with maintainable, readable and clean code
