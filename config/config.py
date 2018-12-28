@@ -12,7 +12,7 @@ class Config(object):
 
     ANCHOR_RATIOS: List[Tuple[int, int]] = [(1, 2), (1, 1), (2, 1)]
     ANCHOR_SIZES: List[int] = [128, 256, 512]
-    POOLING_MODE: ROIWrapper.Mode = ROIWrapper.Mode.POOLING
+    POOLING_MODE: ROIWrapper.Mode = ROIWrapper.Mode.ALIGN
 
     @classmethod
     def describe(cls):
