@@ -22,8 +22,8 @@ An easy implementation of Faster R-CNN in PyTorch.
 
 * PASCAL VOC 2007
 
-    * Train: 2007 trainval (5011 samples)
-    * Eval: 2007 test (4952 samples)
+    * Train: 2007 trainval (5011 images)
+    * Eval: 2007 test (4952 images)
 
     <table>
         <tr>
@@ -169,6 +169,52 @@ An easy implementation of Faster R-CNN in PyTorch.
             <td>70000</td>
         </tr>
         <tr>
+            <td>Ours</td>
+            <td>ResNet-18</td>
+            <td>GTX 1080 Ti</td>
+            <td>~ 19.4</td>
+            <td>~ 38.7</td>
+            <td>0.6783</td>
+            <td>600</td>
+            <td>1000</td>
+            <td>[(1, 2), (1, 1), (2, 1)]</td>
+            <td>[128, 256, 512]</td>
+            <td>align</td>
+            <td>12000</td>
+            <td>2000</td>
+            <td>6000</td>
+            <td>300</td>
+            <td>0.001</td>
+            <td>0.9</td>
+            <td>0.0005</td>
+            <td>50000</td>
+            <td>0.1</td>
+            <td>70000</td>
+        </tr>
+        <tr>
+            <td>Ours</td>
+            <td>ResNet-50</td>
+            <td>GTX 1080 Ti</td>
+            <td>~ 8.7</td>
+            <td>~ 22.4</td>
+            <td>0.7402</td>
+            <td>600</td>
+            <td>1000</td>
+            <td>[(1, 2), (1, 1), (2, 1)]</td>
+            <td>[128, 256, 512]</td>
+            <td>align</td>
+            <td>12000</td>
+            <td>2000</td>
+            <td>6000</td>
+            <td>300</td>
+            <td>0.001</td>
+            <td>0.9</td>
+            <td>0.0005</td>
+            <td>50000</td>
+            <td>0.1</td>
+            <td>70000</td>
+        </tr>
+        <tr>
             <td>ruotianluo/pytorch-faster-rcnn</td>
             <td>ResNet-101</td>
             <td>TITAN Xp</td>
@@ -222,7 +268,7 @@ An easy implementation of Faster R-CNN in PyTorch.
             </td>
             <td>ResNet-101</td>
             <td>GTX 1080 Ti</td>
-            <td>~ 6.3</td>
+            <td>5 ~ 6</td>
             <td>~ 11.8</td>
             <td>0.7538</td>
             <td>600</td>
@@ -247,8 +293,8 @@ An easy implementation of Faster R-CNN in PyTorch.
 
 * MS COCO 2017
 
-    * Train: 2017 Train = 2015 Train + 2015 Val - 2015 Val Sample 5k (117266 samples)
-    * Eval: 2017 Val = 2015 Val Sample 5k (formerly known as `minival`) (4952 samples)
+    * Train: 2017 Train = 2015 Train + 2015 Val - 2015 Val Sample 5k (117266 images)
+    * Eval: 2017 Val = 2015 Val Sample 5k (formerly known as `minival`) (4952 images)
 
     <table>
         <tr>
@@ -331,21 +377,21 @@ An easy implementation of Faster R-CNN in PyTorch.
             <td>~ 5.1</td>
             <td>~ 8.9</td>
             <td>0.287</td>
-            <td>800</td>
-            <td>1333</td>
+            <td><b>800</b></td>
+            <td><b>1333</b></td>
             <td>[(1, 2), (1, 1), (2, 1)]</td>
-            <td>[64, 128, 256, 512]</td>
+            <td><b>[64, 128, 256, 512]</b></td>
             <td>align</td>
             <td>12000</td>
             <td>2000</td>
             <td>6000</td>
-            <td>1000</td>
+            <td><b>1000</b></td>
             <td>0.001</td>
             <td>0.9</td>
-            <td>0.0001</td>
-            <td>900000</td>
+            <td><b>0.0001</b></td>
+            <td><b>900000</b></td>
             <td>0.1</td>
-            <td>1200000</td>
+            <td><b>1200000</b></td>
         </tr>
         <tr>
             <td>ruotianluo/pytorch-faster-rcnn</td>
@@ -404,21 +450,21 @@ An easy implementation of Faster R-CNN in PyTorch.
             <td>~ 4.7</td>
             <td>~ 7.8</td>
             <td>0.352</td>
-            <td>800</td>
-            <td>1333</td>
+            <td><b>800</b></td>
+            <td><b>1333</b></td>
             <td>[(1, 2), (1, 1), (2, 1)]</td>
-            <td>[64, 128, 256, 512]</td>
+            <td><b>[64, 128, 256, 512]</b></td>
             <td>align</td>
             <td>12000</td>
             <td>2000</td>
             <td>6000</td>
-            <td>1000</td>
+            <td><b>1000</b></td>
             <td>0.001</td>
             <td>0.9</td>
-            <td>0.0001</td>
-            <td>900000</td>
+            <td><b>0.0001</b></td>
+            <td><b>900000</b></td>
             <td>0.1</td>
-            <td>1200000</td>
+            <td><b>1200000</b></td>
         </tr>
         <tr>
             <td>
@@ -431,26 +477,128 @@ An easy implementation of Faster R-CNN in PyTorch.
             <td>~ 4.5</td>
             <td>~ 7.5</td>
             <td>0.358</td>
-            <td>800</td>
-            <td>1333</td>
+            <td><b>800</b></td>
+            <td><b>1333</b></td>
             <td>[(1, 2), (1, 1), (2, 1)]</td>
-            <td>[32, 64, 128, 256, 512]</td>
+            <td><b>[32, 64, 128, 256, 512]</b></td>
             <td>align</td>
             <td>12000</td>
             <td>2000</td>
             <td>6000</td>
-            <td>1000</td>
+            <td><b>1000</b></td>
             <td>0.001</td>
             <td>0.9</td>
-            <td>0.0001</td>
-            <td>900000</td>
+            <td><b>0.0001</b></td>
+            <td><b>900000</b></td>
             <td>0.1</td>
-            <td>1200000</td>
+            <td><b>1200000</b></td>
         </tr>
     </table>
     
     > Scroll to right for more configurations
-    
+
+* PASCAL VOC 2007 Cat Dog
+
+    * Train: 2007 trainval drops categories other than cat and dog (750 images)
+    * Eval: 2007 test drops categories other than cat and dog (728 images)
+
+    <table>
+        <tr>
+            <th>Implementation</th>
+            <th>Backbone</th>
+            <th>GPU</th>
+            <th>Training Speed (FPS)</th>
+            <th>Inference Speed (FPS)</th>
+            <th>mAP</th>
+            <th>image_min_side</th>
+            <th>image_max_side</th>
+            <th>anchor_ratios</th>
+            <th>anchor_sizes</th>
+            <th>pooling_mode</th>
+            <th>train_pre_rpn_nms_top_n</th>
+            <th>train_post_rpn_nms_top_n</th>
+            <th>eval_pre_rpn_nms_top_n</th>
+            <th>eval_post_rpn_nms_top_n</th>
+            <th>learning_rate</th>
+            <th>momentum</th>
+            <th>weight_decay</th>
+            <th>step_lr_size</th>
+            <th>step_lr_gamma</th>
+            <th>num_steps_to_finish</th>
+        </tr>
+        <tr>
+            <td>Ours</td>
+            <td>ResNet-18</td>
+            <td>GTX 1080 Ti</td>
+            <td>~ 19.4</td>
+            <td>~ 56.2</td>
+            <td>0.3776</td>
+            <td>600</td>
+            <td>1000</td>
+            <td>[(1, 2), (1, 1), (2, 1)]</td>
+            <td>[128, 256, 512]</td>
+            <td>align</td>
+            <td>12000</td>
+            <td>2000</td>
+            <td>6000</td>
+            <td>300</td>
+            <td>0.001</td>
+            <td>0.9</td>
+            <td>0.0005</td>
+            <td><b>700</b></td>
+            <td>0.1</td>
+            <td><b>1000</b></td>
+        </tr>
+        <tr>
+            <td>Ours</td>
+            <td>ResNet-18</td>
+            <td>GTX 1080 Ti</td>
+            <td>~ 19.4</td>
+            <td>~ 56.2</td>
+            <td>0.6175</td>
+            <td>600</td>
+            <td>1000</td>
+            <td>[(1, 2), (1, 1), (2, 1)]</td>
+            <td>[128, 256, 512]</td>
+            <td>align</td>
+            <td>12000</td>
+            <td>2000</td>
+            <td>6000</td>
+            <td>300</td>
+            <td>0.001</td>
+            <td>0.9</td>
+            <td>0.0005</td>
+            <td><b>2000</b></td>
+            <td>0.1</td>
+            <td><b>3000</b></td>
+        </tr>
+        <tr>
+            <td>Ours</td>
+            <td>ResNet-18</td>
+            <td>GTX 1080 Ti</td>
+            <td>~ 19.4</td>
+            <td>~ 56.2</td>
+            <td>0.7639</td>
+            <td>600</td>
+            <td>1000</td>
+            <td>[(1, 2), (1, 1), (2, 1)]</td>
+            <td>[128, 256, 512]</td>
+            <td>align</td>
+            <td>12000</td>
+            <td>2000</td>
+            <td>6000</td>
+            <td>300</td>
+            <td>0.001</td>
+            <td>0.9</td>
+            <td>0.0005</td>
+            <td><b>7000</b></td>
+            <td>0.1</td>
+            <td><b>10000</b></td>
+        </tr>
+    </table>
+
+    > Scroll to right for more configurations
+
 
 ## Requirements
 
