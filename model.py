@@ -1,5 +1,5 @@
 import os
-from typing import Union, Tuple, Callable, List
+from typing import Union, Tuple, Callable, List, NamedTuple
 
 import torch
 from torch import nn, Tensor
@@ -16,30 +16,26 @@ from rpn.region_proposal_network import RegionProposalNetwork
 
 class Model(nn.Module):
 
-    class ForwardInput:
-        class Train(object):
-            def __init__(self, image: Tensor, gt_classes: Tensor, gt_bboxes: Tensor):
-                self.image = image
-                self.gt_classes = gt_classes
-                self.gt_bboxes = gt_bboxes
+    class ForwardInput(object):
+        class Train(NamedTuple):
+            image: Tensor
+            gt_classes: Tensor
+            gt_bboxes: Tensor
 
-        class Eval(object):
-            def __init__(self, image: Tensor):
-                self.image = image
+        class Eval(NamedTuple):
+            image: Tensor
 
-    class ForwardOutput:
-        class Train(object):
-            def __init__(self, anchor_objectness_loss: Tensor, anchor_transformer_loss: Tensor, proposal_class_loss: Tensor, proposal_transformer_loss: Tensor):
-                self.anchor_objectness_loss = anchor_objectness_loss
-                self.anchor_transformer_loss = anchor_transformer_loss
-                self.proposal_class_loss = proposal_class_loss
-                self.proposal_transformer_loss = proposal_transformer_loss
+    class ForwardOutput(object):
+        class Train(NamedTuple):
+            anchor_objectness_loss: Tensor
+            anchor_transformer_loss: Tensor
+            proposal_class_loss: Tensor
+            proposal_transformer_loss: Tensor
 
-        class Eval(object):
-            def __init__(self, detection_bboxes: Tensor, detection_classes: Tensor, detection_probs: Tensor):
-                self.detection_bboxes = detection_bboxes
-                self.detection_classes = detection_classes
-                self.detection_probs = detection_probs
+        class Eval(NamedTuple):
+            detection_bboxes: Tensor
+            detection_classes: Tensor
+            detection_probs: Tensor
 
     def __init__(self, backbone: BackboneBase, num_classes: int, pooling_mode: ROIWrapper.Mode,
                  anchor_ratios: List[Tuple[int, int]], anchor_sizes: List[int], rpn_pre_nms_top_n: int, rpn_post_nms_top_n: int):
