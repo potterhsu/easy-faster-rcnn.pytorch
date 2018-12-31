@@ -30,12 +30,14 @@ def _infer(path_to_input_image: str, path_to_output_image: str, path_to_checkpoi
     detection_classes = forward_output.detection_classes
     detection_probs = forward_output.detection_probs
 
+    kept_indices = detection_probs > prob_thresh
+    detection_bboxes = detection_bboxes[kept_indices]
+    detection_classes = detection_classes[kept_indices]
+    detection_probs = detection_probs[kept_indices]
+
     draw = ImageDraw.Draw(image)
 
     for bbox, cls, prob in zip(detection_bboxes.tolist(), detection_classes.tolist(), detection_probs.tolist()):
-        if prob < prob_thresh:
-            continue
-
         color = random.choice(['red', 'green', 'blue', 'yellow', 'purple', 'white'])
         bbox = BBox(left=bbox[0], top=bbox[1], right=bbox[2], bottom=bbox[3])
         category = dataset_class.LABEL_TO_CATEGORY_DICT[cls]
