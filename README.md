@@ -293,8 +293,8 @@ An easy implementation of Faster R-CNN in PyTorch.
 
 * MS COCO 2017
 
-    * Train: 2017 Train = 2015 Train + 2015 Val - 2015 Val Sample 5k (117266 images)
-    * Eval: 2017 Val = 2015 Val Sample 5k (formerly known as `minival`) (4952 images)
+    * Train: 2017 Train drops images without any objects (117266 images)
+    * Eval: 2017 Val drops images without any objects (4952 images)
 
     <table>
         <tr>
@@ -729,6 +729,12 @@ An easy implementation of Faster R-CNN in PyTorch.
         $ make
         ```
         > It's not necessary to be under project directory
+
+    * If an error with message `pycocotools/_mask.c: No such file or directory` has occurred, please install `cython` and try again
+
+        ```
+        $ pip install cython
+        ```
 
     1. Copy `pycocotools` into project
 
