@@ -49,10 +49,8 @@ class Model(nn.Module):
         self._bn_modules = [it for it in self.features.modules() if isinstance(it, nn.BatchNorm2d)] + \
                            [it for it in hidden.modules() if isinstance(it, nn.BatchNorm2d)]
 
-        self.num_classes = num_classes
-
         self.rpn = RegionProposalNetwork(num_features_out, anchor_ratios, anchor_sizes, rpn_pre_nms_top_n, rpn_post_nms_top_n)
-        self.detection = Model.Detection(pooling_mode, pool_handler, hidden, hidden_handler, num_hidden_out, self.num_classes)
+        self.detection = Model.Detection(pooling_mode, pool_handler, hidden, hidden_handler, num_hidden_out, num_classes)
 
     def forward(self, forward_input: Union[ForwardInput.Train, ForwardInput.Eval]) -> Union[ForwardOutput.Train, ForwardOutput.Eval]:
         # freeze batch normalization modules for each forwarding process just in case model was switched to `train` at any time
