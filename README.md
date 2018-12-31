@@ -730,7 +730,7 @@ An easy implementation of Faster R-CNN in PyTorch.
         ```
         > It's not necessary to be under project directory
 
-    * If an error with message `pycocotools/_mask.c: No such file or directory` has occurred, please install `cython` and try again
+    1. If an error with message `pycocotools/_mask.c: No such file or directory` has occurred, please install `cython` and try again
 
         ```
         $ pip install cython
