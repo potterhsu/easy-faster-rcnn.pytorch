@@ -776,7 +776,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 
     * To apply custom configuration (see also `eval.py`)
         ```
-        $ python eval.py -s=voc2007 -b=vgg16 --pooling_mode=pooling --rpn_post_nms_top_n=1000
+        $ python eval.py -s=voc2007 -b=vgg16 --pooling_mode=pooling --rpn_post_nms_top_n=1000 /path/to/checkpoint.pth
         ```
 
 1. Infer
