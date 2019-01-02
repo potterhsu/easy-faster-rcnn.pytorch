@@ -59,10 +59,7 @@ def _train(dataset_name: str, backbone_name: str, path_to_data_dir: str, path_to
             forward_input = Model.ForwardInput.Train(image, gt_classes=labels, gt_bboxes=bboxes)
             forward_output: Model.ForwardOutput.Train = model.train().forward(forward_input)
 
-            anchor_objectness_loss = forward_output.anchor_objectness_loss
-            anchor_transformer_loss = forward_output.anchor_transformer_loss
-            proposal_class_loss = forward_output.proposal_class_loss
-            proposal_transformer_loss = forward_output.proposal_transformer_loss
+            anchor_objectness_loss, anchor_transformer_loss, proposal_class_loss, proposal_transformer_loss = forward_output
             loss = anchor_objectness_loss + anchor_transformer_loss + proposal_class_loss + proposal_transformer_loss
 
             optimizer.zero_grad()
