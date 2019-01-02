@@ -113,7 +113,7 @@ if __name__ == '__main__':
         parser.add_argument('--learning_rate', type=float, help='default: {:g}'.format(Config.LEARNING_RATE))
         parser.add_argument('--momentum', type=float, help='default: {:g}'.format(Config.MOMENTUM))
         parser.add_argument('--weight_decay', type=float, help='default: {:g}'.format(Config.WEIGHT_DECAY))
-        parser.add_argument('--step_lr_size', type=float, help='default: {:d}'.format(Config.STEP_LR_SIZE))
+        parser.add_argument('--step_lr_size', type=int, help='default: {:d}'.format(Config.STEP_LR_SIZE))
         parser.add_argument('--step_lr_gamma', type=float, help='default: {:g}'.format(Config.STEP_LR_GAMMA))
         parser.add_argument('--num_steps_to_display', type=int, help='default: {:d}'.format(Config.NUM_STEPS_TO_DISPLAY))
         parser.add_argument('--num_steps_to_snapshot', type=int, help='default: {:d}'.format(Config.NUM_STEPS_TO_SNAPSHOT))
