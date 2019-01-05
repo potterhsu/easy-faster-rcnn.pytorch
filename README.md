@@ -268,7 +268,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             </td>
             <td>ResNet-101</td>
             <td>GTX 1080 Ti</td>
-            <td>5 ~ 6</td>
+            <td>~ 5.6</td>
             <td>~ 11.8</td>
             <td>0.7538</td>
             <td>600</td>
