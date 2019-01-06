@@ -169,12 +169,16 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <td>70000</td>
         </tr>
         <tr>
-            <td>Ours</td>
+            <td>
+                <a href="https://drive.google.com/open?id=1Yv2C3htLpG-KkICyQ0SbeyIOyYJsXMHq">
+                    Ours
+                </a>
+            </td>
             <td>ResNet-18</td>
             <td>GTX 1080 Ti</td>
             <td>~ 19.4</td>
             <td>~ 38.7</td>
-            <td>0.6783</td>
+            <td>0.6769</td>
             <td>600</td>
             <td>1000</td>
             <td>[(1, 2), (1, 1), (2, 1)]</td>
@@ -192,12 +196,16 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <td>70000</td>
         </tr>
         <tr>
-            <td>Ours</td>
+            <td>
+                <a href="https://drive.google.com/open?id=1qUhPlIam2pl9oWwQWDa9V_YEOr5sOUYb">
+                    Ours
+                </a>
+            </td>
             <td>ResNet-50</td>
             <td>GTX 1080 Ti</td>
             <td>~ 8.7</td>
             <td>~ 22.4</td>
-            <td>0.7402</td>
+            <td>0.7423</td>
             <td>600</td>
             <td>1000</td>
             <td>[(1, 2), (1, 1), (2, 1)]</td>
