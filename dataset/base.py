@@ -14,19 +14,25 @@ class Base(torch.utils.data.dataset.Dataset):
         TRAIN = 'train'
         EVAL = 'eval'
 
-    OPTIONS = ['voc2007', 'voc2007-cat-dog', 'coco2017']
+    OPTIONS = ['voc2007', 'coco2017', 'voc2007-cat-dog', 'coco2017-person', 'coco2017-car']
 
     @staticmethod
     def from_name(name: str) -> Type['Base']:
         if name == 'voc2007':
             from dataset.voc2007 import VOC2007
             return VOC2007
-        elif name == 'voc2007-cat-dog':
-            from dataset.voc2007_cat_dog import VOC2007CatDog
-            return VOC2007CatDog
         elif name == 'coco2017':
             from dataset.coco2017 import COCO2017
             return COCO2017
+        elif name == 'voc2007-cat-dog':
+            from dataset.voc2007_cat_dog import VOC2007CatDog
+            return VOC2007CatDog
+        elif name == 'coco2017-person':
+            from dataset.coco2017_person import COCO2017Person
+            return COCO2017Person
+        elif name == 'coco2017-car':
+            from dataset.coco2017_car import COCO2017Car
+            return COCO2017Car
         else:
             raise ValueError
 
