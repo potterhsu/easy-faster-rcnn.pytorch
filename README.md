@@ -634,6 +634,16 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 
     > Scroll to right for more configurations
 
+* MS COCO 2017 Person
+
+    * Train: 2017 Train drops categories other than person (64115 images)
+    * Eval: 2017 Val drops categories other than person (2693 images)
+
+* MS COCO 2017 Car
+
+    * Train: 2017 Train drops categories other than car (12251 images)
+    * Eval: 2017 Val drops categories other than car (535 images)
+
 
 ## Requirements
 
