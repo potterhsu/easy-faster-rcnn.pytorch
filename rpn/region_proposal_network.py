@@ -32,7 +32,7 @@ class RegionProposalNetwork(nn.Module):
         self._objectness = nn.Conv2d(in_channels=512, out_channels=num_anchors * 2, kernel_size=1)
         self._transformer = nn.Conv2d(in_channels=512, out_channels=num_anchors * 4, kernel_size=1)
 
-    def forward(self, features: Tensor, image_width: int, image_height: int) -> Tuple[Tensor, Tensor]:
+    def forward(self, features: Tensor) -> Tuple[Tensor, Tensor]:
         features = self._features(features)
         objectnesses = self._objectness(features)
         transformers = self._transformer(features)

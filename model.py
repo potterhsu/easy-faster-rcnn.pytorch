@@ -59,7 +59,7 @@ class Model(nn.Module):
         image_height, image_width = image.shape[2], image.shape[3]
 
         features = self.features(image)
-        anchor_objectnesses, anchor_transformers = self.rpn.forward(features, image_width, image_height)
+        anchor_objectnesses, anchor_transformers = self.rpn.forward(features)
 
         anchor_bboxes = self.rpn.generate_anchors(image_width, image_height, num_x_anchors=features.shape[3], num_y_anchors=features.shape[2]).cuda()
         proposal_bboxes = self.rpn.generate_proposals(anchor_bboxes, anchor_objectnesses, anchor_transformers, image_width, image_height)
