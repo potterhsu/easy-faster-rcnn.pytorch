@@ -214,7 +214,7 @@ class Model(nn.Module):
                 proposal_class_probs = proposal_class_probs[kept_indices]
 
                 generated_bboxes.append(detection_class_bboxes)
-                generated_classes.append(torch.ones(len(kept_indices)) * c)
+                generated_classes.append(torch.ones(len(kept_indices), dtype=torch.int) * c)
                 generated_probs.append(proposal_class_probs)
 
             generated_bboxes = torch.cat(generated_bboxes, dim=0)
