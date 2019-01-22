@@ -87,9 +87,6 @@ class BBox(object):
 
     @staticmethod
     def clip(bboxes: Tensor, left: float, top: float, right: float, bottom: float) -> Tensor:
-        return torch.stack([
-            torch.clamp(bboxes[:, 0], min=left, max=right),
-            torch.clamp(bboxes[:, 1], min=top, max=bottom),
-            torch.clamp(bboxes[:, 2], min=left, max=right),
-            torch.clamp(bboxes[:, 3], min=top, max=bottom)
-        ], dim=1)
+        bboxes[..., [0, 2]] = bboxes[..., [0, 2]].clamp(min=left, max=right)
+        bboxes[..., [1, 3]] = bboxes[..., [1, 3]].clamp(min=top, max=bottom)
+        return bboxes

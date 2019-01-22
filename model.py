@@ -136,7 +136,7 @@ class Model(nn.Module):
             sample_selected_indices = torch.arange(end=len(proposal_bboxes), dtype=torch.long)
 
             # find labels for each `proposal_bboxes`
-            labels = torch.ones(len(proposal_bboxes), dtype=torch.long).cuda() * -1
+            labels = torch.ones(len(proposal_bboxes), dtype=torch.long, device=proposal_bboxes.device) * -1
             ious = BBox.iou(proposal_bboxes, gt_bboxes)
             proposal_max_ious, proposal_assignments = ious.max(dim=1)
             labels[proposal_max_ious < 0.5] = 0
@@ -156,9 +156,6 @@ class Model(nn.Module):
 
             gt_proposal_transformers = (gt_proposal_transformers - self._transformer_normalize_mean) / self._transformer_normalize_std
 
-            gt_proposal_transformers = gt_proposal_transformers.cuda()
-            gt_proposal_classes = gt_proposal_classes.cuda()
-
             sample_fg_indices = sample_fg_indices[fg_indices]
             sample_selected_indices = sample_selected_indices[selected_indices]
 
@@ -168,7 +165,7 @@ class Model(nn.Module):
             cross_entropy = F.cross_entropy(input=proposal_classes, target=gt_proposal_classes)
 
             proposal_transformers = proposal_transformers.view(-1, self.num_classes, 4)
-            proposal_transformers = proposal_transformers[torch.arange(end=len(proposal_transformers), dtype=torch.long).cuda(), gt_proposal_classes]
+            proposal_transformers = proposal_transformers[torch.arange(end=len(proposal_transformers), dtype=torch.long), gt_proposal_classes]
 
             fg_indices = gt_proposal_classes.nonzero().view(-1)
 
@@ -188,14 +185,9 @@ class Model(nn.Module):
             detection_bboxes = BBox.apply_transformer(proposal_bboxes.view(-1, 4), proposal_transformers.view(-1, 4))
 
             detection_bboxes = detection_bboxes.view(-1, self.num_classes, 4)
-
-            detection_bboxes[:, :, [0, 2]] = detection_bboxes[:, :, [0, 2]].clamp(min=0, max=image_width)
-            detection_bboxes[:, :, [1, 3]] = detection_bboxes[:, :, [1, 3]].clamp(min=0, max=image_height)
+            detection_bboxes = BBox.clip(detection_bboxes, left=0, top=0, right=image_width, bottom=image_height)
 
             proposal_probs = F.softmax(proposal_classes, dim=1)
-
-            detection_bboxes = detection_bboxes.cpu()
-            proposal_probs = proposal_probs.cpu()
 
             generated_bboxes = []
             generated_classes = []
@@ -209,7 +201,7 @@ class Model(nn.Module):
                 detection_class_bboxes = detection_class_bboxes[sorted_indices]
                 proposal_class_probs = proposal_class_probs[sorted_indices]
 
-                kept_indices = NMS.suppress(detection_class_bboxes.cuda(), threshold=0.3)
+                kept_indices = NMS.suppress(detection_class_bboxes, threshold=0.3)
                 detection_class_bboxes = detection_class_bboxes[kept_indices]
                 proposal_class_probs = proposal_class_probs[kept_indices]
 

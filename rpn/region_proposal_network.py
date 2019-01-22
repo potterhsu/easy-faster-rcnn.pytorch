@@ -46,11 +46,8 @@ class RegionProposalNetwork(nn.Module):
         sample_fg_indices = torch.arange(end=len(anchor_bboxes), dtype=torch.long)
         sample_selected_indices = torch.arange(end=len(anchor_bboxes), dtype=torch.long)
 
-        anchor_bboxes = anchor_bboxes.cpu()
-        gt_bboxes = gt_bboxes.cpu()
-
         # remove cross-boundary
-        boundary = torch.tensor(BBox(0, 0, image_width, image_height).tolist(), dtype=torch.float)
+        boundary = torch.tensor(BBox(0, 0, image_width, image_height).tolist()).to(anchor_bboxes)
         inside_indices = BBox.inside(anchor_bboxes, boundary.unsqueeze(dim=0)).squeeze().nonzero().view(-1)
 
         anchor_bboxes = anchor_bboxes[inside_indices]
@@ -58,7 +55,7 @@ class RegionProposalNetwork(nn.Module):
         sample_selected_indices = sample_selected_indices[inside_indices]
 
         # find labels for each `anchor_bboxes`
-        labels = torch.ones(len(anchor_bboxes), dtype=torch.long) * -1
+        labels = torch.ones(len(anchor_bboxes), dtype=torch.long, device=anchor_bboxes.device) * -1
         ious = BBox.iou(anchor_bboxes, gt_bboxes)
         anchor_max_ious, anchor_assignments = ious.max(dim=1)
         gt_max_ious, gt_assignments = ious.max(dim=0)
@@ -79,9 +76,6 @@ class RegionProposalNetwork(nn.Module):
         gt_bboxes = gt_bboxes[anchor_assignments[fg_indices]]
         anchor_bboxes = anchor_bboxes[fg_indices]
         gt_anchor_transformers = BBox.calc_transformer(anchor_bboxes, gt_bboxes)
-
-        gt_anchor_objectnesses = gt_anchor_objectnesses.cuda()
-        gt_anchor_transformers = gt_anchor_transformers.cuda()
 
         sample_fg_indices = sample_fg_indices[fg_indices]
         sample_selected_indices = sample_selected_indices[selected_indices]
@@ -131,7 +125,7 @@ class RegionProposalNetwork(nn.Module):
         sorted_anchor_bboxes = anchor_bboxes[sorted_indices]
 
         proposal_bboxes = BBox.apply_transformer(sorted_anchor_bboxes, sorted_transformers.detach())
-        proposal_bboxes = BBox.clip(proposal_bboxes, 0, 0, image_width, image_height)
+        proposal_bboxes = BBox.clip(proposal_bboxes, left=0, top=0, right=image_width, bottom=image_height)
 
         proposal_bboxes = proposal_bboxes[:self._pre_nms_top_n]
         kept_indices = NMS.suppress(proposal_bboxes, threshold=0.7)
