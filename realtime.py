@@ -14,7 +14,7 @@ from bbox import BBox
 from model import Model
 from roi.wrapper import Wrapper as ROIWrapper
 
-
+# TODO: update
 def _realtime(path_to_input_stream_endpoint: str, period_of_inference: int, path_to_checkpoint: str, dataset_name: str, backbone_name: str, prob_thresh: float):
     video_capture = cv2.VideoCapture(path_to_input_stream_endpoint)
 

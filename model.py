@@ -1,5 +1,5 @@
 import os
-from typing import Union, Tuple, Callable, List, NamedTuple
+from typing import Union, Tuple, Callable, List, Optional
 
 import torch
 from torch import nn, Tensor
@@ -9,6 +9,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 
 from backbone.base import Base as BackboneBase
 from bbox import BBox
+from extention.functional import beta_smooth_l1_loss
 from nms.nms import NMS
 from roi.wrapper import Wrapper as ROIWrapper
 from rpn.region_proposal_network import RegionProposalNetwork
@@ -16,74 +17,45 @@ from rpn.region_proposal_network import RegionProposalNetwork
 
 class Model(nn.Module):
 
-    class ForwardInput(object):
-        class Train(NamedTuple):
-            image: Tensor
-            gt_classes: Tensor
-            gt_bboxes: Tensor
-
-        class Eval(NamedTuple):
-            image: Tensor
-
-    class ForwardOutput(object):
-        class Train(NamedTuple):
-            anchor_objectness_loss: Tensor
-            anchor_transformer_loss: Tensor
-            proposal_class_loss: Tensor
-            proposal_transformer_loss: Tensor
-
-        class Eval(NamedTuple):
-            detection_bboxes: Tensor
-            detection_classes: Tensor
-            detection_probs: Tensor
-
     def __init__(self, backbone: BackboneBase, num_classes: int, pooling_mode: ROIWrapper.Mode,
-                 anchor_ratios: List[Tuple[int, int]], anchor_sizes: List[int], rpn_pre_nms_top_n: int, rpn_post_nms_top_n: int):
+                 anchor_ratios: List[Tuple[int, int]], anchor_sizes: List[int],
+                 rpn_pre_nms_top_n: int, rpn_post_nms_top_n: int,
+                 anchor_smooth_l1_loss_beta: Optional[float] = None, proposal_smooth_l1_loss_beta: Optional[float] = None):
         super().__init__()
 
         self.features, pool_handler, hidden, hidden_handler, num_features_out, num_hidden_out = backbone.features()
         self._bn_modules = [it for it in self.features.modules() if isinstance(it, nn.BatchNorm2d)] + \
                            [it for it in hidden.modules() if isinstance(it, nn.BatchNorm2d)]
 
-        self.rpn = RegionProposalNetwork(num_features_out, anchor_ratios, anchor_sizes, rpn_pre_nms_top_n, rpn_post_nms_top_n)
-        self.detection = Model.Detection(pooling_mode, pool_handler, hidden, hidden_handler, num_hidden_out, num_classes)
+        self.rpn = RegionProposalNetwork(num_features_out, anchor_ratios, anchor_sizes, rpn_pre_nms_top_n, rpn_post_nms_top_n, anchor_smooth_l1_loss_beta)
+        self.detection = Model.Detection(pooling_mode, pool_handler, hidden, hidden_handler, num_hidden_out, num_classes, proposal_smooth_l1_loss_beta)
 
-    def forward(self, forward_input: Union[ForwardInput.Train, ForwardInput.Eval]) -> Union[ForwardOutput.Train, ForwardOutput.Eval]:
+    def forward(self, image_batch: Tensor, gt_bboxes_batch: Tensor = None, gt_classes_batch: Tensor = None) -> Union[Tuple[Tensor, Tensor, Tensor, Tensor],
+                                                                                                                     Tuple[Tensor, Tensor, Tensor, Tensor]]:
         # freeze batch normalization modules for each forwarding process just in case model was switched to `train` at any time
         for bn_module in self._bn_modules:
             bn_module.eval()
             for parameter in bn_module.parameters():
                 parameter.requires_grad = False
 
-        image = forward_input.image.unsqueeze(dim=0)
-        image_height, image_width = image.shape[2], image.shape[3]
+        features = self.features(image_batch)
 
-        features = self.features(image)
-        anchor_objectnesses, anchor_transformers = self.rpn.forward(features)
+        batch_size, _, image_height, image_width = image_batch.shape
+        _, _, features_height, features_width = features.shape
 
-        anchor_bboxes = self.rpn.generate_anchors(image_width, image_height, num_x_anchors=features.shape[3], num_y_anchors=features.shape[2]).cuda()
-        proposal_bboxes = self.rpn.generate_proposals(anchor_bboxes, anchor_objectnesses, anchor_transformers, image_width, image_height)
+        anchor_bboxes = self.rpn.generate_anchors(image_width, image_height, num_x_anchors=features_width, num_y_anchors=features_height).to(features).repeat(batch_size, 1, 1)
 
         if self.training:
-            forward_input: Model.ForwardInput.Train
-
-            anchor_sample_fg_indices, anchor_sample_selected_indices, gt_anchor_objectnesses, gt_anchor_transformers = self.rpn.sample(anchor_bboxes, forward_input.gt_bboxes, image_width, image_height)
-            anchor_objectnesses = anchor_objectnesses[anchor_sample_selected_indices]
-            anchor_transformers = anchor_transformers[anchor_sample_fg_indices]
-            anchor_objectness_loss, anchor_transformer_loss = self.rpn.loss(anchor_objectnesses, anchor_transformers, gt_anchor_objectnesses, gt_anchor_transformers)
-
-            proposal_sample_fg_indices, proposal_sample_selected_indices, gt_proposal_classes, gt_proposal_transformers = self.detection.sample(proposal_bboxes, forward_input.gt_classes, forward_input.gt_bboxes)
-            proposal_bboxes = proposal_bboxes[proposal_sample_selected_indices]
-            proposal_classes, proposal_transformers = self.detection.forward(features, proposal_bboxes)
-            proposal_class_loss, proposal_transformer_loss = self.detection.loss(proposal_classes, proposal_transformers, gt_proposal_classes, gt_proposal_transformers)
-
-            forward_output = Model.ForwardOutput.Train(anchor_objectness_loss, anchor_transformer_loss, proposal_class_loss, proposal_transformer_loss)
+            anchor_objectnesses, anchor_transformers, anchor_objectness_loss, anchor_transformer_loss = self.rpn.forward(features, anchor_bboxes, gt_bboxes_batch, image_width, image_height)
+            proposal_bboxes = self.rpn.generate_proposals(anchor_bboxes, anchor_objectnesses, anchor_transformers, image_width, image_height).detach()  # it's necessary to detach `proposal_bboxes` here
+            proposal_classes, proposal_transformers, proposal_class_loss, proposal_transformer_loss = self.detection.forward(features, proposal_bboxes, gt_classes_batch, gt_bboxes_batch)
+            return anchor_objectness_loss, anchor_transformer_loss, proposal_class_loss, proposal_transformer_loss
         else:
+            anchor_objectnesses, anchor_transformers = self.rpn.forward(features)
+            proposal_bboxes = self.rpn.generate_proposals(anchor_bboxes, anchor_objectnesses, anchor_transformers, image_width, image_height)
             proposal_classes, proposal_transformers = self.detection.forward(features, proposal_bboxes)
-            detection_bboxes, detection_classes, detection_probs = self.detection.generate_detections(proposal_bboxes, proposal_classes, proposal_transformers, image_width, image_height)
-            forward_output = Model.ForwardOutput.Eval(detection_bboxes, detection_classes, detection_probs)
-
-        return forward_output
+            detection_bboxes, detection_classes, detection_probs, detection_batch_indices = self.detection.generate_detections(proposal_bboxes, proposal_classes, proposal_transformers, image_width, image_height)
+            return detection_bboxes, detection_classes, detection_probs, detection_batch_indices
 
     def save(self, path_to_checkpoints_dir: str, step: int, optimizer: Optimizer, scheduler: _LRScheduler) -> str:
         path_to_checkpoint = os.path.join(path_to_checkpoints_dir, f'model-{step}.pth')
@@ -108,108 +80,122 @@ class Model(nn.Module):
 
     class Detection(nn.Module):
 
-        def __init__(self, pooling_mode: ROIWrapper.Mode, pool_handler: Callable[[Tensor], Tensor], hidden: nn.Module, hidden_handler: Callable[[Tensor], Tensor], num_hidden_out: int, num_classes: int):
+        def __init__(self, pooling_mode: ROIWrapper.Mode, pool_handler: Callable[[Tensor], Tensor], hidden: nn.Module, hidden_handler: Callable[[Tensor], Tensor], num_hidden_out: int, num_classes: int, proposal_smooth_l1_loss_beta: float):
             super().__init__()
             self._pooling_mode = pooling_mode
             self.pool_handler = pool_handler
             self.hidden = hidden
             self.hidden_handler = hidden_handler
             self.num_classes = num_classes
-            self._class = nn.Linear(num_hidden_out, num_classes)
-            self._transformer = nn.Linear(num_hidden_out, num_classes * 4)
-            self._transformer_normalize_mean = torch.tensor([0., 0., 0., 0.], dtype=torch.float).cuda()
-            self._transformer_normalize_std = torch.tensor([.1, .1, .2, .2], dtype=torch.float).cuda()
+            self._proposal_class = nn.Linear(num_hidden_out, num_classes)
+            self._proposal_transformer = nn.Linear(num_hidden_out, num_classes * 4)
+            self._proposal_smooth_l1_loss_beta = proposal_smooth_l1_loss_beta
+            self._transformer_normalize_mean = torch.tensor([0., 0., 0., 0.], dtype=torch.float)
+            self._transformer_normalize_std = torch.tensor([.1, .1, .2, .2], dtype=torch.float)
 
-        def forward(self, features: Tensor, proposal_bboxes: Tensor) -> Tuple[Tensor, Tensor]:
-            pool = ROIWrapper.apply(features, proposal_bboxes, mode=self._pooling_mode)
+        def forward(self, features: Tensor, proposal_bboxes: Tensor,
+                    gt_classes_batch: Optional[Tensor] = None, gt_bboxes_batch: Optional[Tensor] = None) -> Union[Tuple[Tensor, Tensor, Tensor, Tensor], Tuple[Tensor, Tensor]]:
+            batch_size = features.shape[0]
 
-            pool = self.pool_handler(pool)
-            hidden = self.hidden(pool)
-            hidden = self.hidden_handler(hidden)
+            if not self.training:
+                proposal_batch_indices = torch.arange(end=batch_size, dtype=torch.long, device=proposal_bboxes.device).view(-1, 1).repeat(1, proposal_bboxes.shape[1])
+                pool = ROIWrapper.apply(features, proposal_bboxes.view(-1, 4), proposal_batch_indices.view(-1), mode=self._pooling_mode)
+                pool = self.pool_handler(pool)
+                hidden = self.hidden(pool)
+                hidden = self.hidden_handler(hidden)
 
-            classes = self._class(hidden)
-            transformers = self._transformer(hidden)
-            return classes, transformers
+                proposal_classes = self._proposal_class(hidden)
+                proposal_transformers = self._proposal_transformer(hidden)
 
-        def sample(self, proposal_bboxes: Tensor, gt_classes: Tensor, gt_bboxes: Tensor) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
-            sample_fg_indices = torch.arange(end=len(proposal_bboxes), dtype=torch.long)
-            sample_selected_indices = torch.arange(end=len(proposal_bboxes), dtype=torch.long)
+                proposal_classes = proposal_classes.view(batch_size, -1, proposal_classes.shape[-1])
+                proposal_transformers = proposal_transformers.view(batch_size, -1, proposal_transformers.shape[-1])
+                return proposal_classes, proposal_transformers
+            else:
+                # find labels for each `proposal_bboxes`
+                labels = torch.full((batch_size, proposal_bboxes.shape[1]), -1, dtype=torch.long, device=proposal_bboxes.device)
+                ious = BBox.iou(proposal_bboxes, gt_bboxes_batch)
+                proposal_max_ious, proposal_assignments = ious.max(dim=2)
+                labels[proposal_max_ious < 0.5] = 0
+                fg_masks = proposal_max_ious >= 0.5
+                if len(fg_masks.nonzero()) > 0:
+                    labels[fg_masks] = gt_classes_batch[fg_masks.nonzero()[:, 0], proposal_assignments[fg_masks]]
 
-            # find labels for each `proposal_bboxes`
-            labels = torch.ones(len(proposal_bboxes), dtype=torch.long, device=proposal_bboxes.device) * -1
-            ious = BBox.iou(proposal_bboxes, gt_bboxes)
-            proposal_max_ious, proposal_assignments = ious.max(dim=1)
-            labels[proposal_max_ious < 0.5] = 0
-            labels[proposal_max_ious >= 0.5] = gt_classes[proposal_assignments[proposal_max_ious >= 0.5]]
+                # select 128 x `batch_size` samples
+                fg_indices = (labels > 0).nonzero()
+                bg_indices = (labels == 0).nonzero()
+                fg_indices = fg_indices[torch.randperm(len(fg_indices))[:min(len(fg_indices), 32 * batch_size)]]
+                bg_indices = bg_indices[torch.randperm(len(bg_indices))[:128 * batch_size - len(fg_indices)]]
+                selected_indices = torch.cat([fg_indices, bg_indices], dim=0)
+                selected_indices = selected_indices[torch.randperm(len(selected_indices))].unbind(dim=1)
 
-            # select 128 samples
-            fg_indices = (labels > 0).nonzero().view(-1)
-            bg_indices = (labels == 0).nonzero().view(-1)
-            fg_indices = fg_indices[torch.randperm(len(fg_indices))[:min(len(fg_indices), 32)]]
-            bg_indices = bg_indices[torch.randperm(len(bg_indices))[:128 - len(fg_indices)]]
-            selected_indices = torch.cat([fg_indices, bg_indices])
-            selected_indices = selected_indices[torch.randperm(len(selected_indices))]
+                proposal_bboxes = proposal_bboxes[selected_indices]
+                gt_bboxes = gt_bboxes_batch[selected_indices[0], proposal_assignments[selected_indices]]
+                gt_proposal_classes = labels[selected_indices]
+                gt_proposal_transformers = BBox.calc_transformer(proposal_bboxes, gt_bboxes)
 
-            proposal_bboxes = proposal_bboxes[selected_indices]
-            gt_proposal_transformers = BBox.calc_transformer(proposal_bboxes, gt_bboxes[proposal_assignments[selected_indices]])
-            gt_proposal_classes = labels[selected_indices]
+                pool = ROIWrapper.apply(features, proposal_bboxes, proposal_batch_indices=selected_indices[0], mode=self._pooling_mode)
+                pool = self.pool_handler(pool)
+                hidden = self.hidden(pool)
+                hidden = self.hidden_handler(hidden)
 
-            gt_proposal_transformers = (gt_proposal_transformers - self._transformer_normalize_mean) / self._transformer_normalize_std
+                proposal_classes = self._proposal_class(hidden)
+                proposal_transformers = self._proposal_transformer(hidden)
+                proposal_class_loss, proposal_transformer_loss = self.loss(proposal_classes, proposal_transformers,
+                                                                           gt_proposal_classes, gt_proposal_transformers)
 
-            sample_fg_indices = sample_fg_indices[fg_indices]
-            sample_selected_indices = sample_selected_indices[selected_indices]
-
-            return sample_fg_indices, sample_selected_indices, gt_proposal_classes, gt_proposal_transformers
+                return proposal_classes, proposal_transformers, proposal_class_loss, proposal_transformer_loss
 
         def loss(self, proposal_classes: Tensor, proposal_transformers: Tensor, gt_proposal_classes: Tensor, gt_proposal_transformers: Tensor) -> Tuple[Tensor, Tensor]:
             cross_entropy = F.cross_entropy(input=proposal_classes, target=gt_proposal_classes)
 
-            proposal_transformers = proposal_transformers.view(-1, self.num_classes, 4)
-            proposal_transformers = proposal_transformers[torch.arange(end=len(proposal_transformers), dtype=torch.long), gt_proposal_classes]
+            proposal_transformers = proposal_transformers.view(-1, self.num_classes, 4)[torch.arange(end=len(proposal_transformers), dtype=torch.long), gt_proposal_classes]
+            gt_proposal_transformers = (gt_proposal_transformers - self._transformer_normalize_mean.cuda()) / self._transformer_normalize_std.cuda()  # scale up target to make regressor easier to learn
 
             fg_indices = gt_proposal_classes.nonzero().view(-1)
+            proposal_transformers = proposal_transformers[fg_indices]
+            gt_proposal_transformers = gt_proposal_transformers[fg_indices]
 
-            # NOTE: The default of `reduction` is `elementwise_mean`, which is divided by N x 4 (number of all elements), here we replaced by N for better performance
-            smooth_l1_loss = F.smooth_l1_loss(input=proposal_transformers[fg_indices], target=gt_proposal_transformers[fg_indices], reduction='sum')
-            smooth_l1_loss /= len(gt_proposal_transformers)
+            smooth_l1_loss = beta_smooth_l1_loss(input=proposal_transformers, target=gt_proposal_transformers, beta=self._proposal_smooth_l1_loss_beta)
 
             return cross_entropy, smooth_l1_loss
 
-        def generate_detections(self, proposal_bboxes: Tensor, proposal_classes: Tensor, proposal_transformers: Tensor, image_width: int, image_height: int) -> Tuple[Tensor, Tensor, Tensor]:
-            proposal_transformers = proposal_transformers.view(-1, self.num_classes, 4)
-            mean = self._transformer_normalize_mean.repeat(1, self.num_classes, 1)
-            std = self._transformer_normalize_std.repeat(1, self.num_classes, 1)
+        def generate_detections(self, proposal_bboxes: Tensor, proposal_classes: Tensor, proposal_transformers: Tensor, image_width: int, image_height: int) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+            batch_size = proposal_bboxes.shape[0]
 
-            proposal_transformers = proposal_transformers * std - mean
-            proposal_bboxes = proposal_bboxes.view(-1, 1, 4).repeat(1, self.num_classes, 1)
-            detection_bboxes = BBox.apply_transformer(proposal_bboxes.view(-1, 4), proposal_transformers.view(-1, 4))
+            proposal_transformers = proposal_transformers.view(batch_size, -1, self.num_classes, 4)
+            proposal_transformers = proposal_transformers * self._transformer_normalize_std.cuda() + self._transformer_normalize_mean.cuda()
 
-            detection_bboxes = detection_bboxes.view(-1, self.num_classes, 4)
+            proposal_bboxes = proposal_bboxes.unsqueeze(dim=2).repeat(1, 1, self.num_classes, 1)
+            detection_bboxes = BBox.apply_transformer(proposal_bboxes, proposal_transformers)
             detection_bboxes = BBox.clip(detection_bboxes, left=0, top=0, right=image_width, bottom=image_height)
 
-            proposal_probs = F.softmax(proposal_classes, dim=1)
+            proposal_probs = F.softmax(proposal_classes, dim=-1)
 
-            generated_bboxes = []
-            generated_classes = []
-            generated_probs = []
+            all_detection_bboxes = []
+            all_detection_classes = []
+            all_detection_probs = []
+            all_detection_batch_indices = []
 
-            for c in range(1, self.num_classes):
-                detection_class_bboxes = detection_bboxes[:, c, :]
-                proposal_class_probs = proposal_probs[:, c]
+            for batch_index in range(batch_size):
+                for c in range(1, self.num_classes):
+                    class_detection_bboxes = detection_bboxes[batch_index, :, c, :]
+                    class_proposal_probs = proposal_probs[batch_index, :, c]
 
-                _, sorted_indices = proposal_class_probs.sort(descending=True)
-                detection_class_bboxes = detection_class_bboxes[sorted_indices]
-                proposal_class_probs = proposal_class_probs[sorted_indices]
+                    _, sorted_indices = class_proposal_probs.sort(dim=0, descending=True)
+                    class_detection_bboxes = class_detection_bboxes[sorted_indices]
+                    class_proposal_probs = class_proposal_probs[sorted_indices]
 
-                kept_indices = NMS.suppress(detection_class_bboxes, threshold=0.3)
-                detection_class_bboxes = detection_class_bboxes[kept_indices]
-                proposal_class_probs = proposal_class_probs[kept_indices]
+                    kept_indices = NMS.suppress(class_detection_bboxes, threshold=0.3)
+                    class_detection_bboxes = class_detection_bboxes[kept_indices]
+                    class_proposal_probs = class_proposal_probs[kept_indices]
 
-                generated_bboxes.append(detection_class_bboxes)
-                generated_classes.append(torch.ones(len(kept_indices), dtype=torch.int) * c)
-                generated_probs.append(proposal_class_probs)
+                    all_detection_bboxes.append(class_detection_bboxes)
+                    all_detection_classes.append(torch.full((len(kept_indices),), c, dtype=torch.int))
+                    all_detection_probs.append(class_proposal_probs)
+                    all_detection_batch_indices.append(torch.full((len(kept_indices),), batch_index, dtype=torch.long))
 
-            generated_bboxes = torch.cat(generated_bboxes, dim=0)
-            generated_classes = torch.cat(generated_classes, dim=0)
-            generated_probs = torch.cat(generated_probs, dim=0)
-            return generated_bboxes, generated_classes, generated_probs
+            all_detection_bboxes = torch.cat(all_detection_bboxes, dim=0)
+            all_detection_classes = torch.cat(all_detection_classes, dim=0)
+            all_detection_probs = torch.cat(all_detection_probs, dim=0)
+            all_detection_batch_indices = torch.cat(all_detection_batch_indices, dim=0)
+            return all_detection_bboxes, all_detection_classes, all_detection_probs, all_detection_batch_indices

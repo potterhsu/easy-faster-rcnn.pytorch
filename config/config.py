@@ -1,6 +1,5 @@
-from typing import Tuple, List
-
 import ast
+from typing import Tuple, List
 
 from roi.wrapper import Wrapper as ROIWrapper
 

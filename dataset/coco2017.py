@@ -69,6 +69,7 @@ class COCO2017(Base):
         path_to_caches_dir = os.path.join('caches', 'coco2017', f'{self._mode.value}')
         path_to_image_ids_pickle = os.path.join(path_to_caches_dir, 'image-ids.pkl')
         path_to_image_id_dict_pickle = os.path.join(path_to_caches_dir, 'image-id-dict.pkl')
+        path_to_image_ratios_pickle = os.path.join(path_to_caches_dir, 'image-ratios.pkl')
 
         if self._mode == COCO2017.Mode.TRAIN:
             path_to_jpeg_images_dir = os.path.join(path_to_coco_dir, 'train2017')
@@ -89,6 +90,9 @@ class COCO2017(Base):
 
             with open(path_to_image_id_dict_pickle, 'rb') as f:
                 self._image_id_to_annotation_dict = pickle.load(f)
+
+            with open(path_to_image_ratios_pickle, 'rb') as f:
+                self._image_ratios = pickle.load(f)
         else:
             print('generating cache files...')
 
@@ -96,6 +100,7 @@ class COCO2017(Base):
 
             self._image_ids: List[str] = []
             self._image_id_to_annotation_dict: Dict[str, COCO2017.Annotation] = {}
+            self._image_ratios = []
 
             for idx, (image, annotation) in enumerate(tqdm(coco_dataset)):
                 if len(annotation) > 0:
@@ -114,16 +119,22 @@ class COCO2017(Base):
                             for ann in annotation]
                     )
 
+                    ratio = float(image.width / image.height)
+                    self._image_ratios.append(ratio)
+
             with open(path_to_image_ids_pickle, 'wb') as f:
                 pickle.dump(self._image_ids, f)
 
             with open(path_to_image_id_dict_pickle, 'wb') as f:
                 pickle.dump(self._image_id_to_annotation_dict, f)
 
+            with open(path_to_image_ratios_pickle, 'wb') as f:
+                pickle.dump(self.image_ratios, f)
+
     def __len__(self) -> int:
         return len(self._image_id_to_annotation_dict)
 
-    def __getitem__(self, index: int) -> Tuple[str, Tensor, float, Tensor, Tensor]:
+    def __getitem__(self, index: int) -> Tuple[str, Tensor, Tensor, Tensor, Tensor]:
         image_id = self._image_ids[index]
         annotation = self._image_id_to_annotation_dict[image_id]
 
@@ -141,6 +152,7 @@ class COCO2017(Base):
             bboxes[:, [0, 2]] = image.width - bboxes[:, [2, 0]]  # index 0 and 2 represent `left` and `right` respectively
 
         image, scale = COCO2017.preprocess(image, self._image_min_side, self._image_max_side)
+        scale = torch.tensor(scale, dtype=torch.float)
         bboxes *= scale
 
         return image_id, image, scale, bboxes, labels
@@ -190,6 +202,10 @@ class COCO2017(Base):
 
         with open(os.path.join(path_to_results_dir, 'results.json'), 'w') as f:
             json.dump(results, f)
+
+    @property
+    def image_ratios(self) -> List[float]:
+        return self._image_ratios
 
     @staticmethod
     def num_classes() -> int:

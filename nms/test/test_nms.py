@@ -11,33 +11,31 @@ from nms.nms import NMS
 class TestNMS(unittest.TestCase):
     def _run_nms(self, bboxes):
         start = time.time()
-        kept_indices = NMS.suppress(bboxes.contiguous(), threshold=0.7)
+        kept_indices = NMS.suppress(bboxes, threshold=0.7)
         print('%s in %.3fs, %d -> %d' % (self.id(), time.time() - start, len(bboxes), len(kept_indices)))
         return kept_indices
 
     def test_nms_empty(self):
-        bboxes = torch.FloatTensor().cuda()
+        bboxes = torch.tensor([], dtype=torch.float).cuda()
         kept_indices = self._run_nms(bboxes)
         self.assertEqual(len(kept_indices), 0)
 
     def test_nms_single(self):
-        bboxes = torch.FloatTensor([[5, 5, 10, 10]]).cuda()
+        bboxes = torch.tensor([[5, 5, 10, 10]], dtype=torch.float).cuda()
         kept_indices = self._run_nms(bboxes)
         self.assertEqual(len(kept_indices), 1)
         self.assertListEqual(kept_indices.tolist(), [0])
 
     def test_nms_small(self):
-        # bboxes = torch.FloatTensor([[5, 5, 10, 10], [5, 5, 10, 10], [5, 5, 30, 30]]).cuda()
-        bboxes = torch.FloatTensor([[5, 5, 10, 10], [5, 5, 30, 30]]).cuda()
+        bboxes = torch.tensor([[5, 5, 10, 10], [5, 5, 10, 10], [5, 5, 30, 30]], dtype=torch.float).cuda()
         kept_indices = self._run_nms(bboxes)
         self.assertEqual(len(kept_indices), 2)
-        # self.assertListEqual(kept_indices.tolist(), [0, 2])
-        self.assertListEqual(kept_indices.tolist(), [0, 1])
+        self.assertListEqual(kept_indices.tolist(), [0, 2])
 
     def test_nms_large(self):
         # detections format: [[left, top, right, bottom, score], ...], which (right, bottom) is included in area
         detections = np.load(os.path.join('nms', 'test', 'nms-large-input.npy'))
-        bboxes = torch.FloatTensor(detections).cuda()
+        bboxes = torch.tensor(detections, dtype=torch.float).cuda()
         sorted_indices = torch.sort(bboxes[:, 4], dim=0, descending=True)[1]
         bboxes = bboxes[:, 0:4][sorted_indices]
 
@@ -55,5 +53,5 @@ class TestNMS(unittest.TestCase):
 
 if __name__ == '__main__':
     assert torch.cuda.is_available(), 'NMS module requires CUDA support'
-    torch.FloatTensor().cuda()  # dummy for initializing GPU
+    torch.tensor([]).cuda()  # dummy for initializing GPU
     unittest.main()

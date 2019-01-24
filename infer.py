@@ -11,7 +11,7 @@ from model import Model
 from roi.wrapper import Wrapper as ROIWrapper
 from config.eval_config import EvalConfig as Config
 
-
+# TODO: update
 def _infer(path_to_input_image: str, path_to_output_image: str, path_to_checkpoint: str, dataset_name: str, backbone_name: str, prob_thresh: float):
     image = transforms.Image.open(path_to_input_image)
     dataset_class = DatasetBase.from_name(dataset_name)

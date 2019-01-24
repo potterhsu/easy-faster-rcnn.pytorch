@@ -1,10 +1,13 @@
+import random
 from enum import Enum
 from typing import Tuple, List, Type
 
 import PIL
 import torch.utils.data.dataset
+import torch.utils.data.sampler
 from PIL import Image
 from torch import Tensor
+from torch.nn import functional as F
 from torchvision.transforms import transforms
 
 
@@ -48,13 +51,17 @@ class Base(torch.utils.data.dataset.Dataset):
     def __len__(self) -> int:
         raise NotImplementedError
 
-    def __getitem__(self, index: int) -> Tuple[str, Tensor, float, Tensor, Tensor]:
+    def __getitem__(self, index: int) -> Tuple[str, Tensor, Tensor, Tensor, Tensor]:
         raise NotImplementedError
 
     def evaluate(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], classes: List[int], probs: List[float]) -> Tuple[float, str]:
         raise NotImplementedError
 
     def _write_results(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], classes: List[int], probs: List[float]):
+        raise NotImplementedError
+
+    @property
+    def image_ratios(self) -> List[float]:
         raise NotImplementedError
 
     @staticmethod
@@ -79,3 +86,61 @@ class Base(torch.utils.data.dataset.Dataset):
         image = transform(image)
 
         return image, scale
+
+    @staticmethod
+    def padding_collate_fn(batch: List[Tuple[str, Tensor, Tensor, Tensor, Tensor]]) -> Tuple[List[str], Tensor, Tensor, Tensor, Tensor]:
+        image_id_batch, image_batch, scale_batch, bboxes_batch, labels_batch = zip(*batch)
+
+        max_image_width = max([it.shape[2] for it in image_batch])
+        max_image_height = max([it.shape[1] for it in image_batch])
+        max_bboxes_length = max([len(it) for it in bboxes_batch])
+        max_labels_length = max([len(it) for it in labels_batch])
+
+        padded_image_batch = []
+        padded_bboxes_batch = []
+        padded_labels_batch = []
+
+        for image in image_batch:
+            padded_image = F.pad(input=image, pad=(0, max_image_width - image.shape[2], 0, max_image_height - image.shape[1]))  # pad has format (left, right, top, bottom)
+            padded_image_batch.append(padded_image)
+
+        for bboxes in bboxes_batch:
+            padded_bboxes = torch.cat([bboxes, torch.zeros(max_bboxes_length - len(bboxes), 4).to(bboxes)])
+            padded_bboxes_batch.append(padded_bboxes)
+
+        for labels in labels_batch:
+            padded_labels = torch.cat([labels, torch.zeros(max_labels_length - len(labels)).to(labels)])
+            padded_labels_batch.append(padded_labels)
+
+        image_id_batch = list(image_id_batch)
+        padded_image_batch = torch.stack(padded_image_batch, dim=0)
+        scale_batch = torch.stack(scale_batch, dim=0)
+        padded_bboxes_batch = torch.stack(padded_bboxes_batch, dim=0)
+        padded_labels_batch = torch.stack(padded_labels_batch, dim=0)
+
+        return image_id_batch, padded_image_batch, scale_batch, padded_bboxes_batch, padded_labels_batch
+
+    class NearestRatioRandomSampler(torch.utils.data.sampler.Sampler):
+
+        def __init__(self, image_ratios: List[float], num_neighbors: int):
+            super().__init__(data_source=None)
+            self._image_ratios = image_ratios
+            self._num_neighbors = num_neighbors
+
+        def __len__(self):
+            return len(self._image_ratios)
+
+        def __iter__(self):
+            image_ratios = torch.tensor(self._image_ratios)
+
+            random_indices = torch.randperm(len(image_ratios))
+            random_image_ratios = image_ratios[random_indices]
+
+            _, sorted_indices = random_image_ratios.sort(descending=random.choice([True, False]))
+            split_indices = random_indices[sorted_indices].split(split_size=self._num_neighbors)
+
+            # leave the last group in the last one
+            sampled_indices = random.sample(population=split_indices[:-1], k=len(split_indices[:-1]))
+            sampled_indices = torch.cat(sampled_indices + [split_indices[-1]])
+
+            return iter(sampled_indices.tolist())

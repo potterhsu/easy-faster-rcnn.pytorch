@@ -16,13 +16,12 @@ class Wrapper(object):
     OPTIONS = ['pooling', 'align']
 
     @staticmethod
-    def apply(features: Tensor, proposal_bboxes: Tensor, mode: Mode) -> Tensor:
+    def apply(features: Tensor, proposal_bboxes: Tensor, proposal_batch_indices: Tensor, mode: Mode) -> Tensor:
         _, _, feature_map_height, feature_map_width = features.shape
-        proposal_bboxes = proposal_bboxes.detach()
 
         if mode == Wrapper.Mode.POOLING:
             pool = []
-            for proposal_bbox in proposal_bboxes:
+            for proposal_bbox in proposal_bboxes:  # TODO: modiify for batch
                 start_x = max(min(round(proposal_bbox[0].item() / 16), feature_map_width - 1), 0)      # [0, feature_map_width)
                 start_y = max(min(round(proposal_bbox[1].item() / 16), feature_map_height - 1), 0)     # (0, feature_map_height]
                 end_x = max(min(round(proposal_bbox[2].item() / 16) + 1, feature_map_width), 1)        # [0, feature_map_width)
@@ -41,7 +40,7 @@ class Wrapper(object):
                 torch.cat([y1 / (feature_map_height - 1), x1 / (feature_map_width - 1),
                            y2 / (feature_map_height - 1), x2 / (feature_map_width - 1)],
                           dim=1),
-                torch.zeros(proposal_bboxes.shape[0], dtype=torch.int, device=proposal_bboxes.device)
+                proposal_batch_indices.int()
             )
             pool = F.max_pool2d(input=crops, kernel_size=2, stride=2)
         else:

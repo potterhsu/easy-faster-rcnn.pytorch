@@ -733,11 +733,6 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
         $ python train.py -s=voc2007 -b=vgg16
         ```
 
-    * To apply recommended configuration (see also `scripts/`)
-        ```
-        $ bash ./scripts/voc2007/vgg16/train.sh
-        ```
-
     * To apply custom configuration (see also `train.py`)
         ```
         $ python train.py -s=voc2007 -b=vgg16 --pooling_mode=pooling --weight_decay=0.0001
@@ -750,11 +745,6 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
         $ python eval.py -s=voc2007 -b=vgg16 /path/to/checkpoint.pth
         ```
 
-    * To apply recommended configuration (see also `scripts/`)
-        ```
-        $ bash ./scripts/voc2007/vgg16/eval.sh /path/to/checkpoint.pth
-        ```
-
     * To apply custom configuration (see also `eval.py`)
         ```
         $ python eval.py -s=voc2007 -b=vgg16 --pooling_mode=pooling --rpn_post_nms_top_n=1000 /path/to/checkpoint.pth
@@ -765,11 +755,6 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
     * To apply default configuration (see also `config/`)
         ```
         $ python infer.py -c=/path/to/checkpoint.pth -s=voc2007 -b=vgg16 /path/to/input/image.jpg /path/to/output/image.jpg
-        ```
-
-    * To apply recommended configuration (see also `scripts/`)
-        ```
-        $ bash ./scripts/voc2007/vgg16/infer.sh /path/to/checkpoint.pth /path/to/input/image.jpg /path/to/output/image.jpg
         ```
 
     * To apply custom configuration (see also `infer.py`)

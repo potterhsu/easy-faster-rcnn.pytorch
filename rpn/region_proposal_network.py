@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple, List, Optional, Union
 
 import numpy as np
 import torch
@@ -6,12 +6,14 @@ from torch import nn, Tensor
 from torch.nn import functional as F
 
 from bbox import BBox
+from extention.functional import beta_smooth_l1_loss
 from nms.nms import NMS
 
 
 class RegionProposalNetwork(nn.Module):
 
-    def __init__(self, num_features_out: int, anchor_ratios: List[Tuple[int, int]], anchor_sizes: List[int], pre_nms_top_n: int, post_nms_top_n: int):
+    def __init__(self, num_features_out: int, anchor_ratios: List[Tuple[int, int]], anchor_sizes: List[int],
+                 pre_nms_top_n: int, post_nms_top_n: int, anchor_smooth_l1_loss_beta: float):
         super().__init__()
 
         self._features = nn.Sequential(
@@ -28,66 +30,70 @@ class RegionProposalNetwork(nn.Module):
 
         self._pre_nms_top_n = pre_nms_top_n
         self._post_nms_top_n = post_nms_top_n
+        self._anchor_smooth_l1_loss_beta = anchor_smooth_l1_loss_beta
 
-        self._objectness = nn.Conv2d(in_channels=512, out_channels=num_anchors * 2, kernel_size=1)
-        self._transformer = nn.Conv2d(in_channels=512, out_channels=num_anchors * 4, kernel_size=1)
+        self._anchor_objectness = nn.Conv2d(in_channels=512, out_channels=num_anchors * 2, kernel_size=1)
+        self._anchor_transformer = nn.Conv2d(in_channels=512, out_channels=num_anchors * 4, kernel_size=1)
 
-    def forward(self, features: Tensor) -> Tuple[Tensor, Tensor]:
+    def forward(self, features: Tensor,
+                anchor_bboxes: Optional[Tensor] = None, gt_bboxes_batch: Optional[Tensor] = None, image_width: Optional[int]=None, image_height: Optional[int]=None) -> Union[Tuple[Tensor, Tensor, Tensor, Tensor], Tuple[Tensor, Tensor]]:
+        batch_size = features.shape[0]
+
         features = self._features(features)
-        objectnesses = self._objectness(features)
-        transformers = self._transformer(features)
+        anchor_objectnesses = self._anchor_objectness(features)
+        anchor_transformers = self._anchor_transformer(features)
 
-        objectnesses = objectnesses.permute(0, 2, 3, 1).contiguous().view(-1, 2)
-        transformers = transformers.permute(0, 2, 3, 1).contiguous().view(-1, 4)
+        anchor_objectnesses = anchor_objectnesses.permute(0, 2, 3, 1).contiguous().view(batch_size, -1, 2)
+        anchor_transformers = anchor_transformers.permute(0, 2, 3, 1).contiguous().view(batch_size, -1, 4)
 
-        return objectnesses, transformers
+        if not self.training:
+            return anchor_objectnesses, anchor_transformers
+        else:
+            # remove cross-boundary
+            # NOTE: The length of `inside_indices` is guaranteed to be a multiple of `anchor_bboxes.shape[0]`, because each batch in `anchor_bboxes` is the same
+            inside_indices = BBox.inside(anchor_bboxes, left=0, top=0, right=image_width, bottom=image_height).nonzero().unbind(dim=1)
+            inside_anchor_bboxes = anchor_bboxes[inside_indices].view(batch_size, -1, anchor_bboxes.shape[2])
+            inside_anchor_objectnesses = anchor_objectnesses[inside_indices].view(batch_size, -1, anchor_objectnesses.shape[2])
+            inside_anchor_transformers = anchor_transformers[inside_indices].view(batch_size, -1, anchor_transformers.shape[2])
 
-    def sample(self, anchor_bboxes: Tensor, gt_bboxes: Tensor, image_width: int, image_height: int) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
-        sample_fg_indices = torch.arange(end=len(anchor_bboxes), dtype=torch.long)
-        sample_selected_indices = torch.arange(end=len(anchor_bboxes), dtype=torch.long)
+            # find labels for each `anchor_bboxes`
+            labels = torch.full((batch_size, inside_anchor_bboxes.shape[1]), -1, dtype=torch.long, device=inside_anchor_bboxes.device)
+            ious = BBox.iou(inside_anchor_bboxes, gt_bboxes_batch)
+            anchor_max_ious, anchor_assignments = ious.max(dim=2)
+            gt_max_ious, gt_assignments = ious.max(dim=1)
+            anchor_additions = ((ious > 0) & (ious == gt_max_ious.unsqueeze(dim=1))).nonzero()[:, :2].unbind(dim=1)
+            labels[anchor_max_ious < 0.3] = 0
+            labels[anchor_additions] = 1
+            labels[anchor_max_ious >= 0.7] = 1
 
-        # remove cross-boundary
-        boundary = torch.tensor(BBox(0, 0, image_width, image_height).tolist()).to(anchor_bboxes)
-        inside_indices = BBox.inside(anchor_bboxes, boundary.unsqueeze(dim=0)).squeeze().nonzero().view(-1)
+            # select 256 x `batch_size` samples
+            fg_indices = (labels == 1).nonzero()
+            bg_indices = (labels == 0).nonzero()
+            fg_indices = fg_indices[torch.randperm(len(fg_indices))[:min(len(fg_indices), 128 * batch_size)]]
+            bg_indices = bg_indices[torch.randperm(len(bg_indices))[:256 * batch_size - len(fg_indices)]]
+            selected_indices = torch.cat([fg_indices, bg_indices], dim=0)
+            selected_indices = selected_indices[torch.randperm(len(selected_indices))].unbind(dim=1)
 
-        anchor_bboxes = anchor_bboxes[inside_indices]
-        sample_fg_indices = sample_fg_indices[inside_indices]
-        sample_selected_indices = sample_selected_indices[inside_indices]
+            inside_anchor_bboxes = inside_anchor_bboxes[selected_indices]
+            gt_bboxes = gt_bboxes_batch[selected_indices[0], anchor_assignments[selected_indices]]
+            gt_anchor_objectnesses = labels[selected_indices]
+            gt_anchor_transformers = BBox.calc_transformer(inside_anchor_bboxes, gt_bboxes)
 
-        # find labels for each `anchor_bboxes`
-        labels = torch.ones(len(anchor_bboxes), dtype=torch.long, device=anchor_bboxes.device) * -1
-        ious = BBox.iou(anchor_bboxes, gt_bboxes)
-        anchor_max_ious, anchor_assignments = ious.max(dim=1)
-        gt_max_ious, gt_assignments = ious.max(dim=0)
-        anchor_additions = (ious == gt_max_ious).nonzero()[:, 0]
-        labels[anchor_max_ious < 0.3] = 0
-        labels[anchor_additions] = 1
-        labels[anchor_max_ious >= 0.7] = 1
+            anchor_objectness_loss, anchor_transformer_loss = self.loss(inside_anchor_objectnesses[selected_indices],
+                                                                        inside_anchor_transformers[selected_indices],
+                                                                        gt_anchor_objectnesses,
+                                                                        gt_anchor_transformers)
 
-        # select 256 samples
-        fg_indices = (labels == 1).nonzero().view(-1)
-        bg_indices = (labels == 0).nonzero().view(-1)
-        fg_indices = fg_indices[torch.randperm(len(fg_indices))[:min(len(fg_indices), 128)]]
-        bg_indices = bg_indices[torch.randperm(len(bg_indices))[:256 - len(fg_indices)]]
-        selected_indices = torch.cat([fg_indices, bg_indices])
-        selected_indices = selected_indices[torch.randperm(len(selected_indices))]
-
-        gt_anchor_objectnesses = labels[selected_indices]
-        gt_bboxes = gt_bboxes[anchor_assignments[fg_indices]]
-        anchor_bboxes = anchor_bboxes[fg_indices]
-        gt_anchor_transformers = BBox.calc_transformer(anchor_bboxes, gt_bboxes)
-
-        sample_fg_indices = sample_fg_indices[fg_indices]
-        sample_selected_indices = sample_selected_indices[selected_indices]
-
-        return sample_fg_indices, sample_selected_indices, gt_anchor_objectnesses, gt_anchor_transformers
+            return anchor_objectnesses, anchor_transformers, anchor_objectness_loss, anchor_transformer_loss
 
     def loss(self, anchor_objectnesses: Tensor, anchor_transformers: Tensor, gt_anchor_objectnesses: Tensor, gt_anchor_transformers: Tensor) -> Tuple[Tensor, Tensor]:
         cross_entropy = F.cross_entropy(input=anchor_objectnesses, target=gt_anchor_objectnesses)
 
-        # NOTE: The default of `reduction` is `elementwise_mean`, which is divided by N x 4 (number of all elements), here we replaced by N for better performance
-        smooth_l1_loss = F.smooth_l1_loss(input=anchor_transformers, target=gt_anchor_transformers, reduction='sum')
-        smooth_l1_loss /= len(gt_anchor_transformers)
+        fg_indices = gt_anchor_objectnesses.nonzero().view(-1)
+        anchor_transformers = anchor_transformers[fg_indices]
+        gt_anchor_transformers = gt_anchor_transformers[fg_indices]
+
+        smooth_l1_loss = beta_smooth_l1_loss(input=anchor_transformers, target=gt_anchor_transformers, beta=self._anchor_smooth_l1_loss_beta)
 
         return cross_entropy, smooth_l1_loss
 
@@ -99,7 +105,6 @@ class RegionProposalNetwork(nn.Module):
         sizes = np.array(self._anchor_sizes)
 
         # NOTE: it's important to let `center_ys` be the major index (i.e., move horizontally and then vertically) for consistency with 2D convolution
-
         # giving the string 'ij' returns a meshgrid with matrix indexing, i.e., with shape (#center_ys, #center_xs, #ratios)
         center_ys, center_xs, ratios, sizes = np.meshgrid(center_ys, center_xs, ratios, sizes, indexing='ij')
 
@@ -118,18 +123,27 @@ class RegionProposalNetwork(nn.Module):
         return anchor_bboxes
 
     def generate_proposals(self, anchor_bboxes: Tensor, objectnesses: Tensor, transformers: Tensor, image_width: int, image_height: int) -> Tensor:
-        proposal_score = objectnesses[:, 1]
-        _, sorted_indices = torch.sort(proposal_score, dim=0, descending=True)
+        batch_size = anchor_bboxes.shape[0]
 
-        sorted_transformers = transformers[sorted_indices]
-        sorted_anchor_bboxes = anchor_bboxes[sorted_indices]
-
-        proposal_bboxes = BBox.apply_transformer(sorted_anchor_bboxes, sorted_transformers.detach())
+        proposal_bboxes = BBox.apply_transformer(anchor_bboxes, transformers)
         proposal_bboxes = BBox.clip(proposal_bboxes, left=0, top=0, right=image_width, bottom=image_height)
 
-        proposal_bboxes = proposal_bboxes[:self._pre_nms_top_n]
-        kept_indices = NMS.suppress(proposal_bboxes, threshold=0.7)
-        proposal_bboxes = proposal_bboxes[kept_indices]
-        proposal_bboxes = proposal_bboxes[:self._post_nms_top_n]
+        _, sorted_indices = torch.sort(objectnesses[:, :, 1], dim=-1, descending=True)
+        nms_proposal_bboxes_batch = []
 
-        return proposal_bboxes
+        for batch_index in range(batch_size):
+            sorted_proposal_bboxes = proposal_bboxes[batch_index][sorted_indices[batch_index]]
+            kept_indices = NMS.suppress(sorted_proposal_bboxes[:self._pre_nms_top_n], threshold=0.7)
+            nms_proposal_bboxes = sorted_proposal_bboxes[kept_indices][:self._post_nms_top_n]
+            nms_proposal_bboxes_batch.append(nms_proposal_bboxes)
+
+        max_nms_proposal_bboxes_length = max([len(it) for it in nms_proposal_bboxes_batch])
+        padded_proposal_bboxes = []
+
+        for nms_proposal_bboxes in nms_proposal_bboxes_batch:
+            padded_proposal_bboxes.append(
+                torch.cat([nms_proposal_bboxes, torch.zeros(max_nms_proposal_bboxes_length - len(nms_proposal_bboxes), 4).to(nms_proposal_bboxes)])
+            )
+
+        padded_proposal_bboxes = torch.stack(padded_proposal_bboxes, dim=0)
+        return padded_proposal_bboxes

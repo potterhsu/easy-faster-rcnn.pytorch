@@ -62,13 +62,15 @@ class VOC2007(Base):
             self._image_ids = [line.rstrip() for line in lines]
 
         self._image_id_to_annotation_dict = {}
+        self._image_ratios = []
+
         for image_id in self._image_ids:
             path_to_annotation_xml = os.path.join(path_to_annotations_dir, f'{image_id}.xml')
             tree = ET.ElementTree(file=path_to_annotation_xml)
             root = tree.getroot()
 
             self._image_id_to_annotation_dict[image_id] = VOC2007.Annotation(
-                filename=next(root.iterfind('filename')).text,
+                filename=root.find('filename').text,
                 objects=[VOC2007.Annotation.Object(name=next(tag_object.iterfind('name')).text,
                                                    difficult=next(tag_object.iterfind('difficult')).text == '1',
                                                    bbox=BBox(
@@ -80,10 +82,15 @@ class VOC2007(Base):
                          for tag_object in root.iterfind('object')]
             )
 
+            width = int(root.find('size/width').text)
+            height = int(root.find('size/height').text)
+            ratio = float(width / height)
+            self._image_ratios.append(ratio)
+
     def __len__(self) -> int:
         return len(self._image_id_to_annotation_dict)
 
-    def __getitem__(self, index: int) -> Tuple[str, Tensor, float, Tensor, Tensor]:
+    def __getitem__(self, index: int) -> Tuple[str, Tensor, Tensor, Tensor, Tensor]:
         image_id = self._image_ids[index]
         annotation = self._image_id_to_annotation_dict[image_id]
 
@@ -101,6 +108,7 @@ class VOC2007(Base):
             bboxes[:, [0, 2]] = image.width - bboxes[:, [2, 0]]  # index 0 and 2 represent `left` and `right` respectively
 
         image, scale = VOC2007.preprocess(image, self._image_min_side, self._image_max_side)
+        scale = torch.tensor(scale, dtype=torch.float)
         bboxes *= scale
 
         return image_id, image, scale, bboxes, labels
@@ -149,6 +157,10 @@ class VOC2007(Base):
 
         for _, f in class_to_txt_files_dict.items():
             f.close()
+
+    @property
+    def image_ratios(self) -> List[float]:
+        return self._image_ratios
 
     @staticmethod
     def num_classes() -> int:
