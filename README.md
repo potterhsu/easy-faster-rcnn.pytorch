@@ -510,61 +510,6 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
     * Train: 2007 trainval drops categories other than cat and dog (750 images)
     * Eval: 2007 test drops categories other than cat and dog (728 images)
 
-    <table>
-        <tr>
-            <th>Implementation</th>
-            <th>Backbone</th>
-            <th>GPU</th>
-            <th>Training Speed (FPS)</th>
-            <th>Inference Speed (FPS)</th>
-            <th>mAP</th>
-            <th>image_min_side</th>
-            <th>image_max_side</th>
-            <th>anchor_ratios</th>
-            <th>anchor_sizes</th>
-            <th>pooling_mode</th>
-            <th>rpn_pre_nms_top_n (train)</th>
-            <th>rpn_post_nms_top_n (train)</th>
-            <th>rpn_pre_nms_top_n (eval)</th>
-            <th>rpn_post_nms_top_n (eval)</th>
-            <th>learning_rate</th>
-            <th>momentum</th>
-            <th>weight_decay</th>
-            <th>step_lr_size</th>
-            <th>step_lr_gamma</th>
-            <th>num_steps_to_finish</th>
-        </tr>
-        <tr>
-            <td>
-                <a href="https://drive.google.com/open?id=15PsO7mNtBcGeisymV1651W3zlpiH20wg">
-                    Ours
-                </a>
-            </td>
-            <td>ResNet-18</td>
-            <td>GTX 1080 Ti</td>
-            <td>19 ~ 20</td>
-            <td>56 ~ 57</td>
-            <td>0.8476|0.7850 (60k|70k)</td>
-            <td>600</td>
-            <td>1000</td>
-            <td>[(1, 2), (1, 1), (2, 1)]</td>
-            <td>[128, 256, 512]</td>
-            <td>align</td>
-            <td>12000</td>
-            <td>2000</td>
-            <td>6000</td>
-            <td>300</td>
-            <td>0.001</td>
-            <td>0.9</td>
-            <td>0.0005</td>
-            <td>50000</td>
-            <td>0.1</td>
-            <td>70000</td>
-        </tr>
-    </table>
-
-    > Scroll to right for more configurations
-
 * MS COCO 2017 Person
 
     * Train: 2017 Train drops categories other than person (64115 images)
