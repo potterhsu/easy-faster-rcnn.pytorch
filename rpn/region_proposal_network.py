@@ -7,7 +7,7 @@ from torch.nn import functional as F
 
 from bbox import BBox
 from extention.functional import beta_smooth_l1_loss
-from nms.nms import NMS
+from support.layer.nms import nms
 
 
 class RegionProposalNetwork(nn.Module):
@@ -50,7 +50,7 @@ class RegionProposalNetwork(nn.Module):
             return anchor_objectnesses, anchor_transformers
         else:
             # remove cross-boundary
-            # NOTE: The length of `inside_indices` is guaranteed to be a multiple of `anchor_bboxes.shape[0]`, because each batch in `anchor_bboxes` is the same
+            # NOTE: The length of `inside_indices` is guaranteed to be a multiple of `anchor_bboxes.shape[0]` as each batch in `anchor_bboxes` is the same
             inside_indices = BBox.inside(anchor_bboxes, left=0, top=0, right=image_width, bottom=image_height).nonzero().unbind(dim=1)
             inside_anchor_bboxes = anchor_bboxes[inside_indices].view(batch_size, -1, anchor_bboxes.shape[2])
             inside_anchor_objectnesses = anchor_objectnesses[inside_indices].view(batch_size, -1, anchor_objectnesses.shape[2])
@@ -127,22 +127,28 @@ class RegionProposalNetwork(nn.Module):
 
         proposal_bboxes = BBox.apply_transformer(anchor_bboxes, transformers)
         proposal_bboxes = BBox.clip(proposal_bboxes, left=0, top=0, right=image_width, bottom=image_height)
+        proposal_probs = F.softmax(objectnesses[:, :, 1], dim=-1)
 
-        _, sorted_indices = torch.sort(objectnesses[:, :, 1], dim=-1, descending=True)
+        _, sorted_indices = torch.sort(proposal_probs, dim=-1, descending=True)
         nms_proposal_bboxes_batch = []
 
         for batch_index in range(batch_size):
-            sorted_proposal_bboxes = proposal_bboxes[batch_index][sorted_indices[batch_index]]
-            kept_indices = NMS.suppress(sorted_proposal_bboxes[:self._pre_nms_top_n], threshold=0.7)
-            nms_proposal_bboxes = sorted_proposal_bboxes[kept_indices][:self._post_nms_top_n]
-            nms_proposal_bboxes_batch.append(nms_proposal_bboxes)
+            sorted_bboxes = proposal_bboxes[batch_index][sorted_indices[batch_index]][:self._pre_nms_top_n]
+            sorted_probs = proposal_probs[batch_index][sorted_indices[batch_index]][:self._pre_nms_top_n]
+            threshold = 0.7
+            kept_indices = nms(sorted_bboxes, sorted_probs, threshold)
+            nms_bboxes = sorted_bboxes[kept_indices][:self._post_nms_top_n]
+            nms_proposal_bboxes_batch.append(nms_bboxes)
 
         max_nms_proposal_bboxes_length = max([len(it) for it in nms_proposal_bboxes_batch])
         padded_proposal_bboxes = []
 
         for nms_proposal_bboxes in nms_proposal_bboxes_batch:
             padded_proposal_bboxes.append(
-                torch.cat([nms_proposal_bboxes, torch.zeros(max_nms_proposal_bboxes_length - len(nms_proposal_bboxes), 4).to(nms_proposal_bboxes)])
+                torch.cat([
+                    nms_proposal_bboxes,
+                    torch.zeros(max_nms_proposal_bboxes_length - len(nms_proposal_bboxes), 4).to(nms_proposal_bboxes)
+                ])
             )
 
         padded_proposal_bboxes = torch.stack(padded_proposal_bboxes, dim=0)

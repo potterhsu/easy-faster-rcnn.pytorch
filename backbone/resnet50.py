@@ -1,8 +1,7 @@
-from typing import Tuple, Callable
+from typing import Tuple
 
 import torchvision
-from torch import nn, Tensor
-from torch.nn import functional as F
+from torch import nn
 
 import backbone.base
 
@@ -12,7 +11,7 @@ class ResNet50(backbone.base.Base):
     def __init__(self, pretrained: bool):
         super().__init__(pretrained)
 
-    def features(self) -> Tuple[nn.Module, Callable[[Tensor], Tensor], nn.Module, Callable[[Tensor], Tensor], int, int]:
+    def features(self) -> Tuple[nn.Module, nn.Module, int, int]:
         resnet50 = torchvision.models.resnet50(pretrained=self._pretrained)
 
         # list(resnet50.children()) consists of following modules
@@ -33,12 +32,4 @@ class ResNet50(backbone.base.Base):
 
         features = nn.Sequential(*features)
 
-        return features, self.pool_handler, hidden, self.hidden_handler, num_features_out, num_hidden_out
-
-    def pool_handler(self, pool: Tensor) -> Tensor:
-        return pool
-
-    def hidden_handler(self, hidden: Tensor) -> Tensor:
-        hidden = F.adaptive_max_pool2d(input=hidden, output_size=1)
-        hidden = hidden.view(hidden.shape[0], -1)
-        return hidden
+        return features, hidden, num_features_out, num_hidden_out

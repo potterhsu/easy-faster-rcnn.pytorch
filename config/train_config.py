@@ -27,14 +27,14 @@ class TrainConfig(Config):
 
     @classmethod
     def setup(cls, image_min_side: float = None, image_max_side: float = None,
-              anchor_ratios: List[Tuple[int, int]] = None, anchor_sizes: List[int] = None, pooling_mode: str = None,
+              anchor_ratios: List[Tuple[int, int]] = None, anchor_sizes: List[int] = None, pooler_mode: str = None,
               rpn_pre_nms_top_n: int = None, rpn_post_nms_top_n: int = None,
               anchor_smooth_l1_loss_beta: float = None, proposal_smooth_l1_loss_beta: float = None,
               batch_size: int = None, learning_rate: float = None, momentum: float = None, weight_decay: float = None,
               step_lr_sizes: List[int] = None, step_lr_gamma: float = None,
               warm_up_factor: float = None, warm_up_num_iters: int = None,
               num_steps_to_display: int = None, num_steps_to_snapshot: int = None, num_steps_to_finish: int = None):
-        super().setup(image_min_side, image_max_side, anchor_ratios, anchor_sizes, pooling_mode)
+        super().setup(image_min_side, image_max_side, anchor_ratios, anchor_sizes, pooler_mode)
 
         if rpn_pre_nms_top_n is not None:
             cls.RPN_PRE_NMS_TOP_N = rpn_pre_nms_top_n

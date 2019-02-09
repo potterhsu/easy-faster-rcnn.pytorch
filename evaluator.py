@@ -30,11 +30,11 @@ class Evaluator(object):
                 scale_batch = scale_batch[detection_batch_indices].unsqueeze(dim=-1).expand_as(detection_bboxes).to(device=detection_bboxes.device)
                 detection_bboxes = detection_bboxes / scale_batch
 
-                selected_indices = (detection_probs > 0.05).nonzero().view(-1)
-                detection_bboxes = detection_bboxes[selected_indices]
-                detection_classes = detection_classes[selected_indices]
-                detection_probs = detection_probs[selected_indices]
-                detection_batch_indices = detection_batch_indices[selected_indices]
+                kept_indices = (detection_probs > 0.05).nonzero().view(-1)
+                detection_bboxes = detection_bboxes[kept_indices]
+                detection_classes = detection_classes[kept_indices]
+                detection_probs = detection_probs[kept_indices]
+                detection_batch_indices = detection_batch_indices[kept_indices]
 
                 all_detection_bboxes.extend(detection_bboxes.tolist())
                 all_detection_classes.extend(detection_classes.tolist())

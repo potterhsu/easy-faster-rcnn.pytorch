@@ -12,18 +12,18 @@ from config.eval_config import EvalConfig as Config
 from dataset.base import Base as DatasetBase
 from bbox import BBox
 from model import Model
-from roi.wrapper import Wrapper as ROIWrapper
+from roi.pooler import Pooler
 
-# TODO: update
+
 def _realtime(path_to_input_stream_endpoint: str, period_of_inference: int, path_to_checkpoint: str, dataset_name: str, backbone_name: str, prob_thresh: float):
-    video_capture = cv2.VideoCapture(path_to_input_stream_endpoint)
-
     dataset_class = DatasetBase.from_name(dataset_name)
     backbone = BackboneBase.from_name(backbone_name)(pretrained=False)
-    model = Model(backbone, dataset_class.num_classes(), pooling_mode=Config.POOLING_MODE,
+    model = Model(backbone, dataset_class.num_classes(), pooler_mode=Config.POOLER_MODE,
                   anchor_ratios=Config.ANCHOR_RATIOS, anchor_sizes=Config.ANCHOR_SIZES,
                   rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N, rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N).cuda()
     model.load(path_to_checkpoint)
+
+    video_capture = cv2.VideoCapture(path_to_input_stream_endpoint)
 
     for sn in itertools.count(start=1):
         _, frame = video_capture.read()
@@ -37,12 +37,9 @@ def _realtime(path_to_input_stream_endpoint: str, period_of_inference: int, path
         image = Image.fromarray(image)
         image_tensor, scale = dataset_class.preprocess(image, Config.IMAGE_MIN_SIDE, Config.IMAGE_MAX_SIDE)
 
-        forward_input = Model.ForwardInput.Eval(image_tensor.cuda())
-        forward_output: Model.ForwardOutput.Eval = model.eval().forward(forward_input)
-
-        detection_bboxes = forward_output.detection_bboxes / scale
-        detection_classes = forward_output.detection_classes
-        detection_probs = forward_output.detection_probs
+        detection_bboxes, detection_classes, detection_probs, _ = \
+            model.eval().forward(image_tensor.unsqueeze(dim=0).cuda())
+        detection_bboxes /= scale
 
         kept_indices = detection_probs > prob_thresh
         detection_bboxes = detection_bboxes[kept_indices]
@@ -86,7 +83,7 @@ if __name__ == '__main__':
         parser.add_argument('--image_max_side', type=float, help='default: {:g}'.format(Config.IMAGE_MAX_SIDE))
         parser.add_argument('--anchor_ratios', type=str, help='default: "{!s}"'.format(Config.ANCHOR_RATIOS))
         parser.add_argument('--anchor_sizes', type=str, help='default: "{!s}"'.format(Config.ANCHOR_SIZES))
-        parser.add_argument('--pooling_mode', type=str, choices=ROIWrapper.OPTIONS, help='default: {.value:s}'.format(Config.POOLING_MODE))
+        parser.add_argument('--pooler_mode', type=str, choices=Pooler.OPTIONS, help='default: {.value:s}'.format(Config.POOLER_MODE))
         parser.add_argument('--rpn_pre_nms_top_n', type=int, help='default: {:d}'.format(Config.RPN_PRE_NMS_TOP_N))
         parser.add_argument('--rpn_post_nms_top_n', type=int, help='default: {:d}'.format(Config.RPN_POST_NMS_TOP_N))
         args = parser.parse_args()
@@ -99,7 +96,7 @@ if __name__ == '__main__':
         prob_thresh = args.probability_threshold
 
         Config.setup(image_min_side=args.image_min_side, image_max_side=args.image_max_side,
-                     anchor_ratios=args.anchor_ratios, anchor_sizes=args.anchor_sizes, pooling_mode=args.pooling_mode,
+                     anchor_ratios=args.anchor_ratios, anchor_sizes=args.anchor_sizes, pooler_mode=args.pooler_mode,
                      rpn_pre_nms_top_n=args.rpn_pre_nms_top_n, rpn_post_nms_top_n=args.rpn_post_nms_top_n)
 
         print('Arguments:')

@@ -10,10 +10,11 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 
 ## Features
 
-* Supports PyTorch 0.4.1
+* Supports PyTorch 1.0
 * Supports `PASCAL VOC 2007` and `MS COCO 2017` datasets
-* Supports `VGG-16`, `ResNet-18`, `ResNet-50` and `ResNet-101` backbones (from official PyTorch model)
-* Supports `ROI Pooling` and `ROI Align` pooling modes
+* Supports `ResNet-18`, `ResNet-50` and `ResNet-101` backbones (from official PyTorch model)
+* Supports `ROI Pooling` and `ROI Align` pooler modes
+* Supports multi-batch and multi-GPU training
 * Matches the performance reported by the original paper
 * It's efficient with maintainable, readable and clean code
 
@@ -37,7 +38,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <th>image_max_side</th>
             <th>anchor_ratios</th>
             <th>anchor_sizes</th>
-            <th>pooling_mode</th>
+            <th>pooler_mode</th>
             <th>rpn_pre_nms_top_n (train)</th>
             <th>rpn_post_nms_top_n (train)</th>
             <th>rpn_pre_nms_top_n (eval)</th>
@@ -316,7 +317,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <th>image_max_side</th>
             <th>anchor_ratios</th>
             <th>anchor_sizes</th>
-            <th>pooling_mode</th>
+            <th>pooler_mode</th>
             <th>rpn_pre_nms_top_n (train)</th>
             <th>rpn_post_nms_top_n (train)</th>
             <th>rpn_pre_nms_top_n (eval)</th>
@@ -522,7 +523,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <th>image_max_side</th>
             <th>anchor_ratios</th>
             <th>anchor_sizes</th>
-            <th>pooling_mode</th>
+            <th>pooler_mode</th>
             <th>rpn_pre_nms_top_n (train)</th>
             <th>rpn_post_nms_top_n (train)</th>
             <th>rpn_pre_nms_top_n (eval)</th>
@@ -584,7 +585,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 ## Requirements
 
 * Python 3.6
-* torch 0.4.1
+* torch 1.0
 * torchvision 0.2.1
 * tqdm
 
@@ -665,40 +666,29 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
                     - ...
             ```
 
-1. Build CUDA modules
+1. Build `Non Maximum Suppression` and `ROI Align` modules (modified from [facebookresearch/maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark))
 
-    1. Define your CUDA architecture code
-
-        ```
-        $ export CUDA_ARCH=sm_61
-        ```
-
-        * `sm_61` is for `GTX 1080 Ti`, to see others visit [here](http://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/)
-
-        * To check your GPU architecture, you might need following script to find out GPU information
-
-            ```
-            $ nvidia-smi -L
-            ```
-
-    1. Build `Non-Maximum-Suppression` module
+    1. Install
 
         ```
-        $ nvcc -arch=$CUDA_ARCH -c --compiler-options -fPIC -o nms/src/nms_cuda.o nms/src/nms_cuda.cu
-        $ python nms/build.py
-        $ python -m nms.test.test_nms
+        $ python support/setup.py develop
         ```
 
-        * Result after unit testing
+    1. Uninstall
+
+        ```
+        $ python support/setup.py develop --uninstall
+        ```
+
+    1. Test
+
+        ```
+        $ python test/nms/test_nms.py
+        ```
+
+        * Result
 
             ![](images/test_nms.png?raw=true)
-
-    1. Build `ROI-Align` module (modified from [RoIAlign.pytorch](https://github.com/longcw/RoIAlign.pytorch))
-
-        ```
-        $ nvcc -arch=$CUDA_ARCH -c --compiler-options -fPIC -o roi/align/src/cuda/crop_and_resize_kernel.cu.o roi/align/src/cuda/crop_and_resize_kernel.cu
-        $ python roi/align/build.py
-        ```
 
 1. Install `pycocotools` for `MS COCO 2017` dataset
 
@@ -730,36 +720,51 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 
     * To apply default configuration (see also `config/`)
         ```
-        $ python train.py -s=voc2007 -b=vgg16
+        $ python train.py -s=voc2007 -b=resnet101
         ```
 
     * To apply custom configuration (see also `train.py`)
         ```
-        $ python train.py -s=voc2007 -b=vgg16 --pooling_mode=pooling --weight_decay=0.0001
+        $ python train.py -s=voc2007 -b=resnet101 --weight_decay=0.0001
+        ```
+
+    * To apply recommended configuration (see also `scripts/`)
+        ```
+        $ bash ./scripts/voc2007/resnet101/train-bs2.sh /path/to/outputs/dir
         ```
 
 1. Evaluate
 
     * To apply default configuration (see also `config/`)
         ```
-        $ python eval.py -s=voc2007 -b=vgg16 /path/to/checkpoint.pth
+        $ python eval.py -s=voc2007 -b=resnet101 /path/to/checkpoint.pth
         ```
 
     * To apply custom configuration (see also `eval.py`)
         ```
-        $ python eval.py -s=voc2007 -b=vgg16 --pooling_mode=pooling --rpn_post_nms_top_n=1000 /path/to/checkpoint.pth
+        $ python eval.py -s=voc2007 -b=resnet101 --rpn_post_nms_top_n=1000 /path/to/checkpoint.pth
+        ```
+
+    * To apply recommended configuration (see also `scripts/`)
+        ```
+        $ bash ./scripts/voc2007/resnet101/eval.sh /path/to/checkpoint.pth
         ```
 
 1. Infer
 
     * To apply default configuration (see also `config/`)
         ```
-        $ python infer.py -c=/path/to/checkpoint.pth -s=voc2007 -b=vgg16 /path/to/input/image.jpg /path/to/output/image.jpg
+        $ python infer.py -c=/path/to/checkpoint.pth -s=voc2007 -b=resnet101 /path/to/input/image.jpg /path/to/output/image.jpg
         ```
 
     * To apply custom configuration (see also `infer.py`)
         ```
-        $ python infer.py -c=/path/to/checkpoint.pth -s=voc2007 -b=vgg16 -p=0.9 /path/to/input/image.jpg /path/to/output/image.jpg
+        $ python infer.py -c=/path/to/checkpoint.pth -s=voc2007 -b=resnet101 -p=0.9 /path/to/input/image.jpg /path/to/output/image.jpg
+        ```
+
+    * To apply recommended configuration (see also `scripts/`)
+        ```
+        $ bash ./scripts/voc2007/resnet101/infer.sh /path/to/checkpoint.pth /path/to/input/image.jpg /path/to/output/image.jpg
         ```
 
 

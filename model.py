@@ -10,25 +10,25 @@ from torch.optim.lr_scheduler import _LRScheduler
 from backbone.base import Base as BackboneBase
 from bbox import BBox
 from extention.functional import beta_smooth_l1_loss
-from nms.nms import NMS
-from roi.wrapper import Wrapper as ROIWrapper
+from support.layer.nms import nms
+from roi.pooler import Pooler
 from rpn.region_proposal_network import RegionProposalNetwork
 
 
 class Model(nn.Module):
 
-    def __init__(self, backbone: BackboneBase, num_classes: int, pooling_mode: ROIWrapper.Mode,
+    def __init__(self, backbone: BackboneBase, num_classes: int, pooler_mode: Pooler.Mode,
                  anchor_ratios: List[Tuple[int, int]], anchor_sizes: List[int],
                  rpn_pre_nms_top_n: int, rpn_post_nms_top_n: int,
                  anchor_smooth_l1_loss_beta: Optional[float] = None, proposal_smooth_l1_loss_beta: Optional[float] = None):
         super().__init__()
 
-        self.features, pool_handler, hidden, hidden_handler, num_features_out, num_hidden_out = backbone.features()
+        self.features, hidden, num_features_out, num_hidden_out = backbone.features()
         self._bn_modules = [it for it in self.features.modules() if isinstance(it, nn.BatchNorm2d)] + \
                            [it for it in hidden.modules() if isinstance(it, nn.BatchNorm2d)]
 
         self.rpn = RegionProposalNetwork(num_features_out, anchor_ratios, anchor_sizes, rpn_pre_nms_top_n, rpn_post_nms_top_n, anchor_smooth_l1_loss_beta)
-        self.detection = Model.Detection(pooling_mode, pool_handler, hidden, hidden_handler, num_hidden_out, num_classes, proposal_smooth_l1_loss_beta)
+        self.detection = Model.Detection(pooler_mode, hidden, num_hidden_out, num_classes, proposal_smooth_l1_loss_beta)
 
     def forward(self, image_batch: Tensor, gt_bboxes_batch: Tensor = None, gt_classes_batch: Tensor = None) -> Union[Tuple[Tensor, Tensor, Tensor, Tensor],
                                                                                                                      Tuple[Tensor, Tensor, Tensor, Tensor]]:
@@ -80,12 +80,10 @@ class Model(nn.Module):
 
     class Detection(nn.Module):
 
-        def __init__(self, pooling_mode: ROIWrapper.Mode, pool_handler: Callable[[Tensor], Tensor], hidden: nn.Module, hidden_handler: Callable[[Tensor], Tensor], num_hidden_out: int, num_classes: int, proposal_smooth_l1_loss_beta: float):
+        def __init__(self, pooler_mode: Pooler.Mode, hidden: nn.Module, num_hidden_out: int, num_classes: int, proposal_smooth_l1_loss_beta: float):
             super().__init__()
-            self._pooling_mode = pooling_mode
-            self.pool_handler = pool_handler
+            self._pooler_mode = pooler_mode
             self.hidden = hidden
-            self.hidden_handler = hidden_handler
             self.num_classes = num_classes
             self._proposal_class = nn.Linear(num_hidden_out, num_classes)
             self._proposal_transformer = nn.Linear(num_hidden_out, num_classes * 4)
@@ -99,10 +97,10 @@ class Model(nn.Module):
 
             if not self.training:
                 proposal_batch_indices = torch.arange(end=batch_size, dtype=torch.long, device=proposal_bboxes.device).view(-1, 1).repeat(1, proposal_bboxes.shape[1])
-                pool = ROIWrapper.apply(features, proposal_bboxes.view(-1, 4), proposal_batch_indices.view(-1), mode=self._pooling_mode)
-                pool = self.pool_handler(pool)
+                pool = Pooler.apply(features, proposal_bboxes.view(-1, 4), proposal_batch_indices.view(-1), mode=self._pooler_mode)
                 hidden = self.hidden(pool)
-                hidden = self.hidden_handler(hidden)
+                hidden = F.adaptive_max_pool2d(input=hidden, output_size=1)
+                hidden = hidden.view(hidden.shape[0], -1)
 
                 proposal_classes = self._proposal_class(hidden)
                 proposal_transformers = self._proposal_transformer(hidden)
@@ -133,10 +131,10 @@ class Model(nn.Module):
                 gt_proposal_classes = labels[selected_indices]
                 gt_proposal_transformers = BBox.calc_transformer(proposal_bboxes, gt_bboxes)
 
-                pool = ROIWrapper.apply(features, proposal_bboxes, proposal_batch_indices=selected_indices[0], mode=self._pooling_mode)
-                pool = self.pool_handler(pool)
+                pool = Pooler.apply(features, proposal_bboxes, proposal_batch_indices=selected_indices[0], mode=self._pooler_mode)
                 hidden = self.hidden(pool)
-                hidden = self.hidden_handler(hidden)
+                hidden = F.adaptive_max_pool2d(input=hidden, output_size=1)
+                hidden = hidden.view(hidden.shape[0], -1)
 
                 proposal_classes = self._proposal_class(hidden)
                 proposal_transformers = self._proposal_transformer(hidden)
@@ -168,8 +166,7 @@ class Model(nn.Module):
             proposal_bboxes = proposal_bboxes.unsqueeze(dim=2).repeat(1, 1, self.num_classes, 1)
             detection_bboxes = BBox.apply_transformer(proposal_bboxes, proposal_transformers)
             detection_bboxes = BBox.clip(detection_bboxes, left=0, top=0, right=image_width, bottom=image_height)
-
-            proposal_probs = F.softmax(proposal_classes, dim=-1)
+            detection_probs = F.softmax(proposal_classes, dim=-1)
 
             all_detection_bboxes = []
             all_detection_classes = []
@@ -178,20 +175,16 @@ class Model(nn.Module):
 
             for batch_index in range(batch_size):
                 for c in range(1, self.num_classes):
-                    class_detection_bboxes = detection_bboxes[batch_index, :, c, :]
-                    class_proposal_probs = proposal_probs[batch_index, :, c]
+                    class_bboxes = detection_bboxes[batch_index, :, c, :]
+                    class_probs = detection_probs[batch_index, :, c]
+                    threshold = 0.3
+                    kept_indices = nms(class_bboxes, class_probs, threshold)
+                    class_bboxes = class_bboxes[kept_indices]
+                    class_probs = class_probs[kept_indices]
 
-                    _, sorted_indices = class_proposal_probs.sort(dim=0, descending=True)
-                    class_detection_bboxes = class_detection_bboxes[sorted_indices]
-                    class_proposal_probs = class_proposal_probs[sorted_indices]
-
-                    kept_indices = NMS.suppress(class_detection_bboxes, threshold=0.3)
-                    class_detection_bboxes = class_detection_bboxes[kept_indices]
-                    class_proposal_probs = class_proposal_probs[kept_indices]
-
-                    all_detection_bboxes.append(class_detection_bboxes)
+                    all_detection_bboxes.append(class_bboxes)
                     all_detection_classes.append(torch.full((len(kept_indices),), c, dtype=torch.int))
-                    all_detection_probs.append(class_proposal_probs)
+                    all_detection_probs.append(class_probs)
                     all_detection_batch_indices.append(torch.full((len(kept_indices),), batch_index, dtype=torch.long))
 
             all_detection_bboxes = torch.cat(all_detection_bboxes, dim=0)
