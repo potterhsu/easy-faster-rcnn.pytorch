@@ -23,7 +23,7 @@ class COCO2017(Base):
 
     class Annotation(object):
         class Object(object):
-            def __init__(self, bbox: BBox, label: int) -> None:
+            def __init__(self, bbox: BBox, label: int):
                 super().__init__()
                 self.bbox = bbox
                 self.label = label
@@ -32,7 +32,7 @@ class COCO2017(Base):
                 return 'Object[label={:d}, bbox={!s}]'.format(
                     self.label, self.bbox)
 
-        def __init__(self, filename: str, objects: List[Object]) -> None:
+        def __init__(self, filename: str, objects: List[Object]):
             super().__init__()
             self.filename = filename
             self.objects = objects

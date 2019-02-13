@@ -75,9 +75,9 @@ if __name__ == '__main__':
         parser = argparse.ArgumentParser()
         parser.add_argument('input', type=str, help='path to input stream endpoint')
         parser.add_argument('period', type=int, help='period of inference')
-        parser.add_argument('-c', '--checkpoint', type=str, required=True, help='path to checkpoint')
         parser.add_argument('-s', '--dataset', type=str, choices=DatasetBase.OPTIONS, required=True, help='name of dataset')
         parser.add_argument('-b', '--backbone', type=str, choices=BackboneBase.OPTIONS, required=True, help='name of backbone model')
+        parser.add_argument('-c', '--checkpoint', type=str, required=True, help='path to checkpoint')
         parser.add_argument('-p', '--probability_threshold', type=float, default=0.6, help='threshold of detection probability')
         parser.add_argument('--image_min_side', type=float, help='default: {:g}'.format(Config.IMAGE_MIN_SIDE))
         parser.add_argument('--image_max_side', type=float, help='default: {:g}'.format(Config.IMAGE_MAX_SIDE))
@@ -90,9 +90,9 @@ if __name__ == '__main__':
 
         path_to_input_stream_endpoint = args.input
         period_of_inference = args.period
-        path_to_checkpoint = args.checkpoint
         dataset_name = args.dataset
         backbone_name = args.backbone
+        path_to_checkpoint = args.checkpoint
         prob_thresh = args.probability_threshold
 
         Config.setup(image_min_side=args.image_min_side, image_max_side=args.image_max_side,

@@ -14,7 +14,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 * Supports `PASCAL VOC 2007` and `MS COCO 2017` datasets
 * Supports `ResNet-18`, `ResNet-50` and `ResNet-101` backbones (from official PyTorch model)
 * Supports `ROI Pooling` and `ROI Align` pooler modes
-* Supports multi-batch and multi-GPU training
+* Supports `Multi-Batch` and `Multi-GPU` training
 * Matches the performance reported by the original paper
 * It's efficient with maintainable, readable and clean code
 
@@ -31,6 +31,8 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <th>Implementation</th>
             <th>Backbone</th>
             <th>GPU</th>
+            <th>#GPUs</th>
+            <th>#Batches/GPU</th>
             <th>Training Speed (FPS)</th>
             <th>Inference Speed (FPS)</th>
             <th>mAP</th>
@@ -43,17 +45,28 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <th>rpn_post_nms_top_n (train)</th>
             <th>rpn_pre_nms_top_n (eval)</th>
             <th>rpn_post_nms_top_n (eval)</th>
+            <th>anchor_smooth_l1_loss_beta</th>
+            <th>proposal_smooth_l1_loss_beta</th>
+            <th>batch_size</th>
             <th>learning_rate</th>
             <th>momentum</th>
             <th>weight_decay</th>
-            <th>step_lr_size</th>
+            <th>step_lr_sizes</th>
             <th>step_lr_gamma</th>
+            <th>warm_up_factor</th>
+            <th>warm_up_num_iters</th>
             <th>num_steps_to_finish</th>
         </tr>
         <tr>
-            <td>Original Paper</td>
+            <td>
+                <a href="https://arxiv.org/abs/1506.01497">
+                    Original Paper
+                </a>
+            </td>
             <td>VGG-16</td>
             <td>Tesla K40</td>
+            <td>1</td>
+            <td>1</td>
             <td>-</td>
             <td>~ 5</td>
             <td>0.699</td>
@@ -72,70 +85,6 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <td>-</td>
             <td>-</td>
             <td>-</td>
-        </tr>
-        <tr>
-            <td>chenyuntc/simple-faster-rcnn-pytorch</td>
-            <td>VGG-16</td>
-            <td>TITAN Xp</td>
-            <td>~ 6.5</td>
-            <td>~ 14.4</td>
-            <td>0.712</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>ruotianluo/pytorch-faster-rcnn</td>
-            <td>VGG-16</td>
-            <td>TITAN Xp</td>
-            <td>-</td>
-            <td>-</td>
-            <td>0.7122</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>jwyang/faster-rcnn.pytorch</td>
-            <td>VGG-16</td>
-            <td>TITAN Xp</td>
-            <td>-</td>
-            <td>-</td>
-            <td>0.701</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
             <td>-</td>
             <td>-</td>
             <td>-</td>
@@ -144,89 +93,14 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
         </tr>
         <tr>
             <td>
-                <a href="https://drive.google.com/open?id=1SKNPzSPFlLL_Y2XhRt6rA0d28Jh6Sy-4">
-                    Ours
+                <a href="https://github.com/ruotianluo/pytorch-faster-rcnn">
+                    ruotianluo/pytorch-faster-rcnn
                 </a>
             </td>
-            <td>VGG-16</td>
-            <td>GTX 1080 Ti</td>
-            <td>~ 7.6</td>
-            <td>~ 17.6</td>
-            <td>0.7013</td>
-            <td>600</td>
-            <td>1000</td>
-            <td>[(1, 2), (1, 1), (2, 1)]</td>
-            <td>[128, 256, 512]</td>
-            <td>align</td>
-            <td>12000</td>
-            <td>2000</td>
-            <td>6000</td>
-            <td>300</td>
-            <td>0.001</td>
-            <td>0.9</td>
-            <td>0.0005</td>
-            <td>50000</td>
-            <td>0.1</td>
-            <td>70000</td>
-        </tr>
-        <tr>
-            <td>
-                <a href="https://drive.google.com/open?id=1Yv2C3htLpG-KkICyQ0SbeyIOyYJsXMHq">
-                    Ours
-                </a>
-            </td>
-            <td>ResNet-18</td>
-            <td>GTX 1080 Ti</td>
-            <td>~ 19.4</td>
-            <td>~ 38.7</td>
-            <td>0.6769</td>
-            <td>600</td>
-            <td>1000</td>
-            <td>[(1, 2), (1, 1), (2, 1)]</td>
-            <td>[128, 256, 512]</td>
-            <td>align</td>
-            <td>12000</td>
-            <td>2000</td>
-            <td>6000</td>
-            <td>300</td>
-            <td>0.001</td>
-            <td>0.9</td>
-            <td>0.0005</td>
-            <td>50000</td>
-            <td>0.1</td>
-            <td>70000</td>
-        </tr>
-        <tr>
-            <td>
-                <a href="https://drive.google.com/open?id=1qUhPlIam2pl9oWwQWDa9V_YEOr5sOUYb">
-                    Ours
-                </a>
-            </td>
-            <td>ResNet-50</td>
-            <td>GTX 1080 Ti</td>
-            <td>~ 8.7</td>
-            <td>~ 22.4</td>
-            <td>0.7423</td>
-            <td>600</td>
-            <td>1000</td>
-            <td>[(1, 2), (1, 1), (2, 1)]</td>
-            <td>[128, 256, 512]</td>
-            <td>align</td>
-            <td>12000</td>
-            <td>2000</td>
-            <td>6000</td>
-            <td>300</td>
-            <td>0.001</td>
-            <td>0.9</td>
-            <td>0.0005</td>
-            <td>50000</td>
-            <td>0.1</td>
-            <td>70000</td>
-        </tr>
-        <tr>
-            <td>ruotianluo/pytorch-faster-rcnn</td>
             <td>ResNet-101</td>
             <td>TITAN Xp</td>
+            <td>-</td>
+            <td>-</td>
             <td>-</td>
             <td>-</td>
             <td>0.7576</td>
@@ -245,11 +119,22 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <td>-</td>
             <td>-</td>
             <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
         </tr>
         <tr>
-            <td>jwyang/faster-rcnn.pytorch</td>
+            <td>
+                <a href="https://github.com/jwyang/faster-rcnn.pytorch">
+                    jwyang/faster-rcnn.pytorch
+                </a>
+            </td>
             <td>ResNet-101</td>
             <td>TITAN Xp</td>
+            <td>1</td>
+            <td>1</td>
             <td>-</td>
             <td>-</td>
             <td>0.752</td>
@@ -268,18 +153,25 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <td>-</td>
             <td>-</td>
             <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
         </tr>
         <tr>
             <td>
-                <a href="https://drive.google.com/open?id=1HCefw8-4eCC5MVz07bhROjFBvt4SKRGD">
+                <a href="https://drive.google.com/open?id=1Gvciz45DbhKRk4WONKxK43UWqsHccbaD">
                     Ours
                 </a>
             </td>
             <td>ResNet-101</td>
             <td>GTX 1080 Ti</td>
-            <td>~ 5.6</td>
-            <td>~ 11.8</td>
-            <td>0.7538</td>
+            <td>1</td>
+            <td>4</td>
+            <td>7.12</td>
+            <td>15.05</td>
+            <td>0.7562</td>
             <td>600</td>
             <td>1000</td>
             <td>[(1, 2), (1, 1), (2, 1)]</td>
@@ -289,16 +181,19 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <td>2000</td>
             <td>6000</td>
             <td>300</td>
+            <td>1.0</td>
+            <td>1.0</td>
+            <td>8</td>
             <td>0.001</td>
             <td>0.9</td>
             <td>0.0005</td>
-            <td>50000</td>
+            <td>[6250, 8750]</td>
             <td>0.1</td>
-            <td>70000</td>
+            <td>0.3333</td>
+            <td>500</td>
+            <td>11250</td>
         </tr>
     </table>
-
-    > Scroll to right for more configurations
 
 * MS COCO 2017
 
@@ -310,9 +205,16 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <th>Implementation</th>
             <th>Backbone</th>
             <th>GPU</th>
+            <th>#GPUs</th>
+            <th>#Batches/GPU</th>
             <th>Training Speed (FPS)</th>
             <th>Inference Speed (FPS)</th>
             <th>AP@[.5:.95]</th>
+            <th>AP@[.5]</th>
+            <th>AP@[.75]</th>
+            <th>AP S</th>
+            <th>AP M</th>
+            <th>AP L</th>
             <th>image_min_side</th>
             <th>image_max_side</th>
             <th>anchor_ratios</th>
@@ -322,88 +224,24 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <th>rpn_post_nms_top_n (train)</th>
             <th>rpn_pre_nms_top_n (eval)</th>
             <th>rpn_post_nms_top_n (eval)</th>
+            <th>anchor_smooth_l1_loss_beta</th>
+            <th>proposal_smooth_l1_loss_beta</th>
+            <th>batch_size</th>
             <th>learning_rate</th>
             <th>momentum</th>
             <th>weight_decay</th>
-            <th>step_lr_size</th>
+            <th>step_lr_sizes</th>
             <th>step_lr_gamma</th>
+            <th>warm_up_factor</th>
+            <th>warm_up_num_iters</th>
             <th>num_steps_to_finish</th>
         </tr>
         <tr>
-            <td>ruotianluo/pytorch-faster-rcnn</td>
-            <td>VGG-16</td>
-            <td>TITAN Xp</td>
-            <td>-</td>
-            <td>-</td>
-            <td>0.301</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>jwyang/faster-rcnn.pytorch</td>
-            <td>VGG-16</td>
-            <td>TITAN Xp</td>
-            <td>-</td>
-            <td>-</td>
-            <td>0.292</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-        </tr>
-        <tr>
             <td>
-                <a href="https://drive.google.com/open?id=1_2X_Sn311f-hs9S0bVyMmeCsE9NppQHI">
-                    Ours
+                <a href="https://github.com/ruotianluo/pytorch-faster-rcnn">
+                    ruotianluo/pytorch-faster-rcnn
                 </a>
             </td>
-            <td>VGG-16</td>
-            <td>GTX 1080 Ti</td>
-            <td>~ 5.1</td>
-            <td>~ 8.9</td>
-            <td>0.287</td>
-            <td><b>800</b></td>
-            <td><b>1333</b></td>
-            <td>[(1, 2), (1, 1), (2, 1)]</td>
-            <td><b>[64, 128, 256, 512]</b></td>
-            <td>align</td>
-            <td>12000</td>
-            <td>2000</td>
-            <td>6000</td>
-            <td><b>1000</b></td>
-            <td>0.001</td>
-            <td>0.9</td>
-            <td><b>0.0001</b></td>
-            <td><b>900000</b></td>
-            <td>0.1</td>
-            <td><b>1200000</b></td>
-        </tr>
-        <tr>
-            <td>ruotianluo/pytorch-faster-rcnn</td>
             <td>ResNet-101</td>
             <td>TITAN Xp</td>
             <td>-</td>
@@ -424,13 +262,29 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <td>-</td>
             <td>-</td>
             <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
         </tr>
         <tr>
-            <td>jwyang/faster-rcnn.pytorch</td>
+            <td>
+                <a href="https://github.com/jwyang/faster-rcnn.pytorch">
+                    jwyang/faster-rcnn.pytorch
+                </a>
+            </td>
             <td>ResNet-101</td>
             <td>TITAN Xp</td>
-            <td>-</td>
-            <td>-</td>
+            <td>8</td>
+            <td>16</td>
             <td>0.370</td>
             <td>-</td>
             <td>-</td>
@@ -447,124 +301,64 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <td>-</td>
             <td>-</td>
             <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
         </tr>
         <tr>
             <td>
-                <a href="https://drive.google.com/open?id=16VyI2GjLrf3uU_bhqvZpC4ZGpen0wS5d">
-                    Ours
+                <a href="#">
+                    Ours (WIP)
                 </a>
             </td>
             <td>ResNet-101</td>
             <td>GTX 1080 Ti</td>
-            <td>~ 4.7</td>
-            <td>~ 7.8</td>
-            <td>0.352</td>
-            <td><b>800</b></td>
-            <td><b>1333</b></td>
+            <td>1</td>
+            <td>2</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>800</td>
+            <td>1333</td>
             <td>[(1, 2), (1, 1), (2, 1)]</td>
-            <td><b>[64, 128, 256, 512]</b></td>
+            <td>[64, 128, 256, 512]</td>
             <td>align</td>
             <td>12000</td>
             <td>2000</td>
             <td>6000</td>
-            <td><b>1000</b></td>
-            <td>0.001</td>
+            <td>1000</td>
+            <td>0.1111</td>
+            <td>1.0</td>
+            <td>2</td>
+            <td>0.0025</td>
             <td>0.9</td>
-            <td><b>0.0001</b></td>
-            <td><b>900000</b></td>
+            <td>0.0001</td>
+            <td>[480000, 640000]</td>
             <td>0.1</td>
-            <td><b>1200000</b></td>
-        </tr>
-        <tr>
-            <td>
-                <a href="https://drive.google.com/open?id=15GsaYxwpo-4mWKxPIkW_C-GXeeKmNNoz">
-                    Ours
-                </a>
-            </td>
-            <td>ResNet-101</td>
-            <td>GTX 1080 Ti</td>
-            <td>~ 4.5</td>
-            <td>~ 7.5</td>
-            <td>0.358</td>
-            <td><b>800</b></td>
-            <td><b>1333</b></td>
-            <td>[(1, 2), (1, 1), (2, 1)]</td>
-            <td><b>[32, 64, 128, 256, 512]</b></td>
-            <td>align</td>
-            <td>12000</td>
-            <td>2000</td>
-            <td>6000</td>
-            <td><b>1000</b></td>
-            <td>0.001</td>
-            <td>0.9</td>
-            <td><b>0.0001</b></td>
-            <td><b>900000</b></td>
-            <td>0.1</td>
-            <td><b>1200000</b></td>
+            <td>0.3333</td>
+            <td>500</td>
+            <td>720000</td>
         </tr>
     </table>
-    
-    > Scroll to right for more configurations
 
 * PASCAL VOC 2007 Cat Dog
 
     * Train: 2007 trainval drops categories other than cat and dog (750 images)
     * Eval: 2007 test drops categories other than cat and dog (728 images)
-
-    <table>
-        <tr>
-            <th>Implementation</th>
-            <th>Backbone</th>
-            <th>GPU</th>
-            <th>Training Speed (FPS)</th>
-            <th>Inference Speed (FPS)</th>
-            <th>mAP</th>
-            <th>image_min_side</th>
-            <th>image_max_side</th>
-            <th>anchor_ratios</th>
-            <th>anchor_sizes</th>
-            <th>pooler_mode</th>
-            <th>rpn_pre_nms_top_n (train)</th>
-            <th>rpn_post_nms_top_n (train)</th>
-            <th>rpn_pre_nms_top_n (eval)</th>
-            <th>rpn_post_nms_top_n (eval)</th>
-            <th>learning_rate</th>
-            <th>momentum</th>
-            <th>weight_decay</th>
-            <th>step_lr_size</th>
-            <th>step_lr_gamma</th>
-            <th>num_steps_to_finish</th>
-        </tr>
-        <tr>
-            <td>
-                <a href="https://drive.google.com/open?id=15PsO7mNtBcGeisymV1651W3zlpiH20wg">
-                    Ours
-                </a>
-            </td>
-            <td>ResNet-18</td>
-            <td>GTX 1080 Ti</td>
-            <td>19 ~ 20</td>
-            <td>56 ~ 57</td>
-            <td>0.8476|0.7850 (60k|70k)</td>
-            <td>600</td>
-            <td>1000</td>
-            <td>[(1, 2), (1, 1), (2, 1)]</td>
-            <td>[128, 256, 512]</td>
-            <td>align</td>
-            <td>12000</td>
-            <td>2000</td>
-            <td>6000</td>
-            <td>300</td>
-            <td>0.001</td>
-            <td>0.9</td>
-            <td>0.0005</td>
-            <td>50000</td>
-            <td>0.1</td>
-            <td>70000</td>
-        </tr>
-    </table>
-
-    > Scroll to right for more configurations
 
 * MS COCO 2017 Person
 
@@ -730,7 +524,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 
     * To apply recommended configuration (see also `scripts/`)
         ```
-        $ bash ./scripts/voc2007/resnet101/train-bs2.sh /path/to/outputs/dir
+        $ bash ./scripts/voc2007/train-bs2.sh /path/to/outputs/dir
         ```
 
 1. Evaluate
@@ -747,24 +541,24 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 
     * To apply recommended configuration (see also `scripts/`)
         ```
-        $ bash ./scripts/voc2007/resnet101/eval.sh /path/to/checkpoint.pth
+        $ bash ./scripts/voc2007/eval.sh resnet101 /path/to/checkpoint.pth
         ```
 
 1. Infer
 
     * To apply default configuration (see also `config/`)
         ```
-        $ python infer.py -c=/path/to/checkpoint.pth -s=voc2007 -b=resnet101 /path/to/input/image.jpg /path/to/output/image.jpg
+        $ python infer.py -s=voc2007 -b=resnet101 -c=/path/to/checkpoint.pth /path/to/input/image.jpg /path/to/output/image.jpg
         ```
 
     * To apply custom configuration (see also `infer.py`)
         ```
-        $ python infer.py -c=/path/to/checkpoint.pth -s=voc2007 -b=resnet101 -p=0.9 /path/to/input/image.jpg /path/to/output/image.jpg
+        $ python infer.py -s=voc2007 -b=resnet101 -c=/path/to/checkpoint.pth -p=0.9 /path/to/input/image.jpg /path/to/output/image.jpg
         ```
 
     * To apply recommended configuration (see also `scripts/`)
         ```
-        $ bash ./scripts/voc2007/resnet101/infer.sh /path/to/checkpoint.pth /path/to/input/image.jpg /path/to/output/image.jpg
+        $ bash ./scripts/voc2007/infer.sh resnet101 /path/to/checkpoint.pth /path/to/input/image.jpg /path/to/output/image.jpg
         ```
 
 

@@ -1,3 +1,5 @@
+from typing import List
+
 import torch
 from torch import Tensor
 
@@ -15,11 +17,11 @@ class BBox(object):
         return 'BBox[l={:.1f}, t={:.1f}, r={:.1f}, b={:.1f}]'.format(
             self.left, self.top, self.right, self.bottom)
 
-    def tolist(self):
+    def tolist(self) -> List[float]:
         return [self.left, self.top, self.right, self.bottom]
 
     @staticmethod
-    def to_center_base(bboxes: Tensor):
+    def to_center_base(bboxes: Tensor) -> Tensor:
         return torch.stack([
             (bboxes[..., 0] + bboxes[..., 2]) / 2,
             (bboxes[..., 1] + bboxes[..., 3]) / 2,

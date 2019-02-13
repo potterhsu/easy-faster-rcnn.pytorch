@@ -36,7 +36,8 @@ class RegionProposalNetwork(nn.Module):
         self._anchor_transformer = nn.Conv2d(in_channels=512, out_channels=num_anchors * 4, kernel_size=1)
 
     def forward(self, features: Tensor,
-                anchor_bboxes: Optional[Tensor] = None, gt_bboxes_batch: Optional[Tensor] = None, image_width: Optional[int]=None, image_height: Optional[int]=None) -> Union[Tuple[Tensor, Tensor, Tensor, Tensor], Tuple[Tensor, Tensor]]:
+                anchor_bboxes: Optional[Tensor] = None, gt_bboxes_batch: Optional[Tensor] = None,
+                image_width: Optional[int]=None, image_height: Optional[int]=None) -> Union[Tuple[Tensor, Tensor], Tuple[Tensor, Tensor, Tensor, Tensor]]:
         batch_size = features.shape[0]
 
         features = self._features(features)
@@ -78,24 +79,37 @@ class RegionProposalNetwork(nn.Module):
             gt_bboxes = gt_bboxes_batch[selected_indices[0], anchor_assignments[selected_indices]]
             gt_anchor_objectnesses = labels[selected_indices]
             gt_anchor_transformers = BBox.calc_transformer(inside_anchor_bboxes, gt_bboxes)
+            batch_indices = selected_indices[0]
 
-            anchor_objectness_loss, anchor_transformer_loss = self.loss(inside_anchor_objectnesses[selected_indices],
-                                                                        inside_anchor_transformers[selected_indices],
-                                                                        gt_anchor_objectnesses,
-                                                                        gt_anchor_transformers)
+            anchor_objectness_losses, anchor_transformer_losses = self.loss(inside_anchor_objectnesses[selected_indices],
+                                                                            inside_anchor_transformers[selected_indices],
+                                                                            gt_anchor_objectnesses,
+                                                                            gt_anchor_transformers,
+                                                                            batch_size, batch_indices)
 
-            return anchor_objectnesses, anchor_transformers, anchor_objectness_loss, anchor_transformer_loss
+            return anchor_objectnesses, anchor_transformers, anchor_objectness_losses, anchor_transformer_losses
 
-    def loss(self, anchor_objectnesses: Tensor, anchor_transformers: Tensor, gt_anchor_objectnesses: Tensor, gt_anchor_transformers: Tensor) -> Tuple[Tensor, Tensor]:
-        cross_entropy = F.cross_entropy(input=anchor_objectnesses, target=gt_anchor_objectnesses)
+    def loss(self, anchor_objectnesses: Tensor, anchor_transformers: Tensor,
+             gt_anchor_objectnesses: Tensor, gt_anchor_transformers: Tensor,
+             batch_size: int, batch_indices: Tensor) -> Tuple[Tensor, Tensor]:
+        cross_entropies = torch.empty(batch_size, dtype=torch.float, device=anchor_objectnesses.device)
+        smooth_l1_losses = torch.empty(batch_size, dtype=torch.float, device=anchor_transformers.device)
 
-        fg_indices = gt_anchor_objectnesses.nonzero().view(-1)
-        anchor_transformers = anchor_transformers[fg_indices]
-        gt_anchor_transformers = gt_anchor_transformers[fg_indices]
+        for batch_index in range(batch_size):
+            selected_indices = (batch_indices == batch_index).nonzero().view(-1)
 
-        smooth_l1_loss = beta_smooth_l1_loss(input=anchor_transformers, target=gt_anchor_transformers, beta=self._anchor_smooth_l1_loss_beta)
+            cross_entropy = F.cross_entropy(input=anchor_objectnesses[selected_indices],
+                                            target=gt_anchor_objectnesses[selected_indices])
 
-        return cross_entropy, smooth_l1_loss
+            fg_indices = gt_anchor_objectnesses[selected_indices].nonzero().view(-1)
+            smooth_l1_loss = beta_smooth_l1_loss(input=anchor_transformers[selected_indices][fg_indices],
+                                                 target=gt_anchor_transformers[selected_indices][fg_indices],
+                                                 beta=self._anchor_smooth_l1_loss_beta)
+
+            cross_entropies[batch_index] = cross_entropy
+            smooth_l1_losses[batch_index] = smooth_l1_loss
+
+        return cross_entropies, smooth_l1_losses
 
     def generate_anchors(self, image_width: int, image_height: int, num_x_anchors: int, num_y_anchors: int) -> Tensor:
         center_ys = np.linspace(start=0, stop=image_height, num=num_y_anchors + 2)[1:-1]

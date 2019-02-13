@@ -68,15 +68,16 @@ class VOC2007CatDog(Base):
 
             annotation = VOC2007CatDog.Annotation(
                 filename=root.find('filename').text,
-                objects=[VOC2007CatDog.Annotation.Object(name=next(tag_object.iterfind('name')).text,
-                                                         difficult=next(tag_object.iterfind('difficult')).text == '1',
-                                                         bbox=BBox(
-                                                             left=float(next(tag_object.iterfind('bndbox/xmin')).text),
-                                                             top=float(next(tag_object.iterfind('bndbox/ymin')).text),
-                                                             right=float(next(tag_object.iterfind('bndbox/xmax')).text),
-                                                             bottom=float(next(tag_object.iterfind('bndbox/ymax')).text))
-                                                         )
-                         for tag_object in root.iterfind('object')]
+                objects=[VOC2007CatDog.Annotation.Object(
+                    name=next(tag_object.iterfind('name')).text,
+                    difficult=next(tag_object.iterfind('difficult')).text == '1',
+                    bbox=BBox(  # convert to 0-based pixel index
+                        left=float(next(tag_object.iterfind('bndbox/xmin')).text) - 1,
+                        top=float(next(tag_object.iterfind('bndbox/ymin')).text) - 1,
+                        right=float(next(tag_object.iterfind('bndbox/xmax')).text) - 1,
+                        bottom=float(next(tag_object.iterfind('bndbox/ymax')).text) - 1
+                    )
+                ) for tag_object in root.iterfind('object')]
             )
             annotation.objects = [obj for obj in annotation.objects if obj.name in ['cat', 'dog'] and not obj.difficult]
 

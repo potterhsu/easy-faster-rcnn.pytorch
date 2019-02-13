@@ -36,9 +36,9 @@ class Pooler(object):
                 features,
                 torch.cat([proposal_batch_indices.view(-1, 1).float(), proposal_bboxes], dim=1)
             )
-            return pool
         else:
             raise ValueError
 
+        pool = F.max_pool2d(input=pool, kernel_size=2, stride=2)
         return pool
 

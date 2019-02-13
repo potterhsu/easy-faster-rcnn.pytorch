@@ -25,7 +25,9 @@ def _eval(path_to_checkpoint: str, dataset_name: str, backbone_name: str, path_t
                   rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N, rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N).cuda()
     model.load(path_to_checkpoint)
 
+    Log.i('Start evaluating with 1 GPU (1 batch per GPU)')
     mean_ap, detail = evaluator.evaluate(model)
+    Log.i('Done')
 
     Log.i('mean AP = {:.4f}'.format(mean_ap))
     Log.i('\n' + detail)

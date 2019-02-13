@@ -1,6 +1,6 @@
 import random
 from enum import Enum
-from typing import Tuple, List, Type
+from typing import Tuple, List, Type, Iterator
 
 import PIL
 import torch.utils.data.dataset
@@ -127,20 +127,29 @@ class Base(torch.utils.data.dataset.Dataset):
             self._image_ratios = image_ratios
             self._num_neighbors = num_neighbors
 
-        def __len__(self):
+        def __len__(self) -> int:
             return len(self._image_ratios)
 
-        def __iter__(self):
+        def __iter__(self) -> Iterator[int]:
             image_ratios = torch.tensor(self._image_ratios)
+            tall_indices = (image_ratios < 1).nonzero().view(-1)
+            fat_indices = (image_ratios >= 1).nonzero().view(-1)
 
-            random_indices = torch.randperm(len(image_ratios))
-            random_image_ratios = image_ratios[random_indices]
+            tall_indices_length = len(tall_indices)
+            fat_indices_length = len(fat_indices)
 
-            _, sorted_indices = random_image_ratios.sort(descending=random.choice([True, False]))
-            split_indices = random_indices[sorted_indices].split(split_size=self._num_neighbors)
+            tall_indices = tall_indices[torch.randperm(tall_indices_length)]
+            fat_indices = fat_indices[torch.randperm(fat_indices_length)]
 
-            # leave the last group in the last one
-            sampled_indices = random.sample(population=split_indices[:-1], k=len(split_indices[:-1]))
-            sampled_indices = torch.cat(sampled_indices + [split_indices[-1]])
+            num_tall_remainder = tall_indices_length % self._num_neighbors
+            num_fat_remainder = fat_indices_length % self._num_neighbors
 
-            return iter(sampled_indices.tolist())
+            tall_indices = tall_indices[:tall_indices_length - num_tall_remainder]
+            fat_indices = fat_indices[:fat_indices_length - num_fat_remainder]
+
+            tall_indices = tall_indices.view(-1, self._num_neighbors)
+            fat_indices = fat_indices.view(-1, self._num_neighbors)
+            merge_indices = torch.cat([tall_indices, fat_indices], dim=0)
+            merge_indices = merge_indices[torch.randperm(len(merge_indices))].view(-1)
+
+            return iter(merge_indices.tolist())

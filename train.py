@@ -30,11 +30,13 @@ def _train(dataset_name: str, backbone_name: str, path_to_data_dir: str, path_to
 
     backbone = BackboneBase.from_name(backbone_name)(pretrained=True)
     model = nn.DataParallel(
-            Model(backbone, dataset.num_classes(), pooler_mode=Config.POOLER_MODE,
-                  anchor_ratios=Config.ANCHOR_RATIOS, anchor_sizes=Config.ANCHOR_SIZES,
-                  rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N, rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N,
-                  anchor_smooth_l1_loss_beta=Config.ANCHOR_SMOOTH_L1_LOSS_BETA, proposal_smooth_l1_loss_beta=Config.PROPOSAL_SMOOTH_L1_LOSS_BETA)
+        Model(
+            backbone, dataset.num_classes(), pooler_mode=Config.POOLER_MODE,
+            anchor_ratios=Config.ANCHOR_RATIOS, anchor_sizes=Config.ANCHOR_SIZES,
+            rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N, rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N,
+            anchor_smooth_l1_loss_beta=Config.ANCHOR_SMOOTH_L1_LOSS_BETA, proposal_smooth_l1_loss_beta=Config.PROPOSAL_SMOOTH_L1_LOSS_BETA
         ).cuda()
+    )
     optimizer = optim.SGD(model.parameters(), lr=Config.LEARNING_RATE,
                           momentum=Config.MOMENTUM, weight_decay=Config.WEIGHT_DECAY)
     scheduler = WarmUpMultiStepLR(optimizer, milestones=Config.STEP_LR_SIZES, gamma=Config.STEP_LR_GAMMA,
@@ -54,6 +56,8 @@ def _train(dataset_name: str, backbone_name: str, path_to_data_dir: str, path_to
         step = model.module.load(path_to_resuming_checkpoint, optimizer, scheduler)
         Log.i(f'Model has been restored from file: {path_to_resuming_checkpoint}')
 
+    device_count = torch.cuda.device_count()
+    assert Config.BATCH_SIZE % device_count == 0, 'The batch size is not divisible by the device count'
     Log.i('Start training with {:d} GPUs ({:d} batches per GPU)'.format(torch.cuda.device_count(),
                                                                         Config.BATCH_SIZE // torch.cuda.device_count()))
 
@@ -64,18 +68,19 @@ def _train(dataset_name: str, backbone_name: str, path_to_data_dir: str, path_to
             bboxes_batch = bboxes_batch.cuda()
             labels_batch = labels_batch.cuda()
 
-            anchor_objectness_loss, anchor_transformer_loss, proposal_class_loss, proposal_transformer_loss = \
+            anchor_objectness_losses, anchor_transformer_losses, proposal_class_losses, proposal_transformer_losses = \
                 model.train().forward(image_batch, bboxes_batch, labels_batch)
-            anchor_objectness_loss = anchor_objectness_loss.mean()
-            anchor_transformer_loss = anchor_transformer_loss.mean()
-            proposal_class_loss = proposal_class_loss.mean()
-            proposal_transformer_loss = proposal_transformer_loss.mean()
+            anchor_objectness_loss = anchor_objectness_losses.mean()
+            anchor_transformer_loss = anchor_transformer_losses.mean()
+            proposal_class_loss = proposal_class_losses.mean()
+            proposal_transformer_loss = proposal_transformer_losses.mean()
             loss = anchor_objectness_loss + anchor_transformer_loss + proposal_class_loss + proposal_transformer_loss
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             scheduler.step()
+
             losses.append(loss.item())
             summary_writer.add_scalar('train/anchor_objectness_loss', anchor_objectness_loss.item(), step)
             summary_writer.add_scalar('train/anchor_transformer_loss', anchor_transformer_loss.item(), step)
@@ -95,7 +100,7 @@ def _train(dataset_name: str, backbone_name: str, path_to_data_dir: str, path_to
                 eta = (num_steps_to_finish - step) / steps_per_sec / 3600
                 avg_loss = sum(losses) / len(losses)
                 lr = scheduler.get_lr()[0]
-                Log.i(f'[Step {step}] Avg. Loss = {avg_loss:.6f}, Learning Rate = {lr:.6f} ({samples_per_sec:.2f} samples/sec; ETA {eta:.1f} hrs)')
+                Log.i(f'[Step {step}] Avg. Loss = {avg_loss:.6f}, Learning Rate = {lr:.8f} ({samples_per_sec:.2f} samples/sec; ETA {eta:.1f} hrs)')
 
             if step % num_steps_to_snapshot == 0 or should_stop:
                 path_to_checkpoint = model.module.save(path_to_checkpoints_dir, step, optimizer, scheduler)
@@ -150,7 +155,7 @@ if __name__ == '__main__':
         Config.setup(image_min_side=args.image_min_side, image_max_side=args.image_max_side,
                      anchor_ratios=args.anchor_ratios, anchor_sizes=args.anchor_sizes, pooler_mode=args.pooler_mode,
                      rpn_pre_nms_top_n=args.rpn_pre_nms_top_n, rpn_post_nms_top_n=args.rpn_post_nms_top_n,
-                     anchor_smooth_l1_loss_beta=args.anchor_smooth_l1_loss_beta, proposal_smooth_l1_loss_beta= args.proposal_smooth_l1_loss_beta,
+                     anchor_smooth_l1_loss_beta=args.anchor_smooth_l1_loss_beta, proposal_smooth_l1_loss_beta=args.proposal_smooth_l1_loss_beta,
                      batch_size=args.batch_size, learning_rate=args.learning_rate, momentum=args.momentum, weight_decay=args.weight_decay,
                      step_lr_sizes=args.step_lr_sizes, step_lr_gamma=args.step_lr_gamma,
                      warm_up_factor=args.warm_up_factor, warm_up_num_iters=args.warm_up_num_iters,
