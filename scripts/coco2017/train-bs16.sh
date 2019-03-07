@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 BACKBONE=$1
 OUTPUTS_DIR=$2
-if ! [[ -n "${OUTPUTS_DIR}" ]]; then
-    echo "Argument OUTPUTS_DIR is missing"
+if ! ([[ -n "${BACKBONE}" ]] && [[ -n "${OUTPUTS_DIR}" ]]); then
+    echo "Argument BACKBONE or OUTPUTS_DIR is missing"
     exit
 fi
 
