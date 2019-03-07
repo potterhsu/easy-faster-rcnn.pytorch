@@ -524,7 +524,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 
     * To apply recommended configuration (see also `scripts/`)
         ```
-        $ bash ./scripts/voc2007/train-bs2.sh /path/to/outputs/dir
+        $ bash ./scripts/voc2007/train-bs2.sh resnet101 /path/to/outputs/dir
         ```
 
 1. Evaluate
