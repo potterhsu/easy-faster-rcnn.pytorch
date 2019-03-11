@@ -161,7 +161,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
         </tr>
         <tr>
             <td>
-                <a href="https://drive.google.com/open?id=1Gvciz45DbhKRk4WONKxK43UWqsHccbaD">
+                <a href="https://drive.google.com/open?id=1IQSqnLFKduZaYcq06lZmYd_e7qbH3cxZ">
                     Ours
                 </a>
             </td>
@@ -183,15 +183,15 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <td>300</td>
             <td>1.0</td>
             <td>1.0</td>
-            <td>8</td>
-            <td>0.001</td>
+            <td><b>4</b></td>
+            <td><b>0.004</b></td>
             <td>0.9</td>
             <td>0.0005</td>
-            <td>[6250, 8750]</td>
+            <td><b>[12500, 17500]</b></td>
             <td>0.1</td>
             <td>0.3333</td>
             <td>500</td>
-            <td>11250</td>
+            <td><b>22500</b></td>
         </tr>
     </table>
 
@@ -246,9 +246,9 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <td>TITAN Xp</td>
             <td>-</td>
             <td>-</td>
+            <td>-</td>
+            <td>-</td>
             <td>0.354</td>
-            <td>-</td>
-            <td>-</td>
             <td>-</td>
             <td>-</td>
             <td>-</td>
@@ -285,9 +285,9 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <td>TITAN Xp</td>
             <td>8</td>
             <td>16</td>
+            <td>-</td>
+            <td>-</td>
             <td>0.370</td>
-            <td>-</td>
-            <td>-</td>
             <td>-</td>
             <td>-</td>
             <td>-</td>
@@ -316,42 +316,42 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
         </tr>
         <tr>
             <td>
-                <a href="#">
-                    Ours (WIP)
+                <a href="https://drive.google.com/open?id=1d-t7sR0-9dyRQvEbisklzoOkTibGMOY8">
+                    Ours
                 </a>
             </td>
             <td>ResNet-101</td>
             <td>GTX 1080 Ti</td>
             <td>1</td>
             <td>2</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>800</td>
-            <td>1333</td>
+            <td>~ 4.84</td>
+            <td>~ 8.00</td>
+            <td>0.356</td>
+            <td>0.562</td>
+            <td>0.389</td>
+            <td>0.176</td>
+            <td>0.398</td>
+            <td>0.511</td>
+            <td><b>800</b></td>
+            <td><b>1333</b></td>
             <td>[(1, 2), (1, 1), (2, 1)]</td>
-            <td>[64, 128, 256, 512]</td>
+            <td><b>[64, 128, 256, 512]</b></td>
             <td>align</td>
             <td>12000</td>
             <td>2000</td>
             <td>6000</td>
-            <td>1000</td>
-            <td>0.1111</td>
+            <td><b>1000</b></td>
+            <td><b>0.1111</b></td>
             <td>1.0</td>
-            <td>2</td>
-            <td>0.0025</td>
+            <td><b>2</b></td>
+            <td><b>0.0025</b></td>
             <td>0.9</td>
-            <td>0.0001</td>
-            <td>[480000, 640000]</td>
+            <td><b>0.0001</b></td>
+            <td><b>[480000, 640000]</b></td>
             <td>0.1</td>
             <td>0.3333</td>
             <td>500</td>
-            <td>720000</td>
+            <td><b>720000</b></td>
         </tr>
     </table>
 
