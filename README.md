@@ -5,7 +5,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 
 ## Demo
 
-![](images/inference-result.jpg?raw=true)
+![](images/demo-result.jpg)
 
 1. Download checkpoint from [here](https://drive.google.com/open?id=1uaphqDLPj-VcH7YopeAn84HFPOFHmuQ5)
 1. Run inference script
