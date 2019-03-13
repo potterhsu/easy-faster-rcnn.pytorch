@@ -8,7 +8,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 ![](images/demo-result.jpg)
 
 1. Download checkpoint from [here](https://drive.google.com/open?id=1uaphqDLPj-VcH7YopeAn84HFPOFHmuQ5)
-1. Follow [Setup](#setup) 2 & 3 instructions
+1. Follow the instructions in [Setup](#setup) 2 & 3
 1. Run inference script
     ```
     $ python infer.py -s=coco2017 -b=resnet101 -c=/path/to/checkpint --image_min_side=800 --image_max_side=1333 --anchor_sizes="[64, 128, 256, 512]" --rpn_post_nms_top_n=1000 /path/to/input/image.jpg /path/to/output/image.jpg
