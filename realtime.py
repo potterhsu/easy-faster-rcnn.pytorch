@@ -73,8 +73,6 @@ def _realtime(path_to_input_stream_endpoint: str, period_of_inference: int, path
 if __name__ == '__main__':
     def main():
         parser = argparse.ArgumentParser()
-        parser.add_argument('input', type=str, help='path to input stream endpoint')
-        parser.add_argument('period', type=int, help='period of inference')
         parser.add_argument('-s', '--dataset', type=str, choices=DatasetBase.OPTIONS, required=True, help='name of dataset')
         parser.add_argument('-b', '--backbone', type=str, choices=BackboneBase.OPTIONS, required=True, help='name of backbone model')
         parser.add_argument('-c', '--checkpoint', type=str, required=True, help='path to checkpoint')
@@ -86,6 +84,8 @@ if __name__ == '__main__':
         parser.add_argument('--pooler_mode', type=str, choices=Pooler.OPTIONS, help='default: {.value:s}'.format(Config.POOLER_MODE))
         parser.add_argument('--rpn_pre_nms_top_n', type=int, help='default: {:d}'.format(Config.RPN_PRE_NMS_TOP_N))
         parser.add_argument('--rpn_post_nms_top_n', type=int, help='default: {:d}'.format(Config.RPN_POST_NMS_TOP_N))
+        parser.add_argument('input', type=str, help='path to input stream endpoint')
+        parser.add_argument('period', type=int, help='period of inference')
         args = parser.parse_args()
 
         path_to_input_stream_endpoint = args.input

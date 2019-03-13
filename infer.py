@@ -49,8 +49,6 @@ def _infer(path_to_input_image: str, path_to_output_image: str, path_to_checkpoi
 if __name__ == '__main__':
     def main():
         parser = argparse.ArgumentParser()
-        parser.add_argument('input', type=str, help='path to input image')
-        parser.add_argument('output', type=str, help='path to output result image')
         parser.add_argument('-s', '--dataset', type=str, choices=DatasetBase.OPTIONS, required=True, help='name of dataset')
         parser.add_argument('-b', '--backbone', type=str, choices=BackboneBase.OPTIONS, required=True, help='name of backbone model')
         parser.add_argument('-c', '--checkpoint', type=str, required=True, help='path to checkpoint')
@@ -62,6 +60,8 @@ if __name__ == '__main__':
         parser.add_argument('--pooler_mode', type=str, choices=Pooler.OPTIONS, help='default: {.value:s}'.format(Config.POOLER_MODE))
         parser.add_argument('--rpn_pre_nms_top_n', type=int, help='default: {:d}'.format(Config.RPN_PRE_NMS_TOP_N))
         parser.add_argument('--rpn_post_nms_top_n', type=int, help='default: {:d}'.format(Config.RPN_POST_NMS_TOP_N))
+        parser.add_argument('input', type=str, help='path to input image')
+        parser.add_argument('output', type=str, help='path to output result image')
         args = parser.parse_args()
 
         path_to_input_image = args.input
