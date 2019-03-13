@@ -2,6 +2,7 @@ import argparse
 import itertools
 import random
 import time
+import torch
 
 import cv2
 import numpy as np
@@ -25,47 +26,48 @@ def _realtime(path_to_input_stream_endpoint: str, period_of_inference: int, path
 
     video_capture = cv2.VideoCapture(path_to_input_stream_endpoint)
 
-    for sn in itertools.count(start=1):
-        _, frame = video_capture.read()
+    with torch.no_grad():
+        for sn in itertools.count(start=1):
+            _, frame = video_capture.read()
 
-        if sn % period_of_inference != 0:
-            continue
+            if sn % period_of_inference != 0:
+                continue
 
-        timestamp = time.time()
+            timestamp = time.time()
 
-        image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        image = Image.fromarray(image)
-        image_tensor, scale = dataset_class.preprocess(image, Config.IMAGE_MIN_SIDE, Config.IMAGE_MAX_SIDE)
+            image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            image = Image.fromarray(image)
+            image_tensor, scale = dataset_class.preprocess(image, Config.IMAGE_MIN_SIDE, Config.IMAGE_MAX_SIDE)
 
-        detection_bboxes, detection_classes, detection_probs, _ = \
-            model.eval().forward(image_tensor.unsqueeze(dim=0).cuda())
-        detection_bboxes /= scale
+            detection_bboxes, detection_classes, detection_probs, _ = \
+                model.eval().forward(image_tensor.unsqueeze(dim=0).cuda())
+            detection_bboxes /= scale
 
-        kept_indices = detection_probs > prob_thresh
-        detection_bboxes = detection_bboxes[kept_indices]
-        detection_classes = detection_classes[kept_indices]
-        detection_probs = detection_probs[kept_indices]
+            kept_indices = detection_probs > prob_thresh
+            detection_bboxes = detection_bboxes[kept_indices]
+            detection_classes = detection_classes[kept_indices]
+            detection_probs = detection_probs[kept_indices]
 
-        draw = ImageDraw.Draw(image)
+            draw = ImageDraw.Draw(image)
 
-        for bbox, cls, prob in zip(detection_bboxes.tolist(), detection_classes.tolist(), detection_probs.tolist()):
-            color = random.choice(['red', 'green', 'blue', 'yellow', 'purple', 'white'])
-            bbox = BBox(left=bbox[0], top=bbox[1], right=bbox[2], bottom=bbox[3])
-            category = dataset_class.LABEL_TO_CATEGORY_DICT[cls]
+            for bbox, cls, prob in zip(detection_bboxes.tolist(), detection_classes.tolist(), detection_probs.tolist()):
+                color = random.choice(['red', 'green', 'blue', 'yellow', 'purple', 'white'])
+                bbox = BBox(left=bbox[0], top=bbox[1], right=bbox[2], bottom=bbox[3])
+                category = dataset_class.LABEL_TO_CATEGORY_DICT[cls]
 
-            draw.rectangle(((bbox.left, bbox.top), (bbox.right, bbox.bottom)), outline=color)
-            draw.text((bbox.left, bbox.top), text=f'{category:s} {prob:.3f}', fill=color)
+                draw.rectangle(((bbox.left, bbox.top), (bbox.right, bbox.bottom)), outline=color)
+                draw.text((bbox.left, bbox.top), text=f'{category:s} {prob:.3f}', fill=color)
 
-        image = np.array(image)
-        frame = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            image = np.array(image)
+            frame = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-        elapse = time.time() - timestamp
-        fps = 1 / elapse
-        cv2.putText(frame, f'FPS = {fps:.1f}', (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1, cv2.LINE_AA)
+            elapse = time.time() - timestamp
+            fps = 1 / elapse
+            cv2.putText(frame, f'FPS = {fps:.1f}', (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1, cv2.LINE_AA)
 
-        cv2.imshow('easy-faster-rcnn.pytorch', frame)
-        if cv2.waitKey(10) == 27:
-            break
+            cv2.imshow('easy-faster-rcnn.pytorch', frame)
+            if cv2.waitKey(10) == 27:
+                break
 
     cv2.destroyAllWindows()
 
@@ -73,8 +75,6 @@ def _realtime(path_to_input_stream_endpoint: str, period_of_inference: int, path
 if __name__ == '__main__':
     def main():
         parser = argparse.ArgumentParser()
-        parser.add_argument('input', type=str, help='path to input stream endpoint')
-        parser.add_argument('period', type=int, help='period of inference')
         parser.add_argument('-s', '--dataset', type=str, choices=DatasetBase.OPTIONS, required=True, help='name of dataset')
         parser.add_argument('-b', '--backbone', type=str, choices=BackboneBase.OPTIONS, required=True, help='name of backbone model')
         parser.add_argument('-c', '--checkpoint', type=str, required=True, help='path to checkpoint')
@@ -86,6 +86,8 @@ if __name__ == '__main__':
         parser.add_argument('--pooler_mode', type=str, choices=Pooler.OPTIONS, help='default: {.value:s}'.format(Config.POOLER_MODE))
         parser.add_argument('--rpn_pre_nms_top_n', type=int, help='default: {:d}'.format(Config.RPN_PRE_NMS_TOP_N))
         parser.add_argument('--rpn_post_nms_top_n', type=int, help='default: {:d}'.format(Config.RPN_POST_NMS_TOP_N))
+        parser.add_argument('input', type=str, help='path to input stream endpoint')
+        parser.add_argument('period', type=int, help='period of inference')
         args = parser.parse_args()
 
         path_to_input_stream_endpoint = args.input
