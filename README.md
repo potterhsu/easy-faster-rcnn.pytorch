@@ -579,3 +579,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 * Illustration for NMS CUDA
 
     ![](images/nms_cuda.png)
+
+* Plot of beta smooth L1 loss function
+
+    ![](images/beta-smooth-l1.png)
