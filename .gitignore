@@ -1,2 +1,9 @@
 .idea/
 __pycache__/
+
+build
+caches
+support.egg-info
+pycocotools
+
+*.so

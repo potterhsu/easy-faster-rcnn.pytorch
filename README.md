@@ -398,6 +398,12 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
     ```
     $ pip install tensorboardX
     ```
+    
+* OpenCV 3.4 (required by `stream.py` only)
+
+    ```
+    $ pip install opencv-python~=3.4
+    ```
 
 
 ## Setup
@@ -565,6 +571,20 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
     * To apply recommended configuration (see also `scripts/`)
         ```
         $ bash ./scripts/voc2007/infer.sh resnet101 /path/to/checkpoint.pth /path/to/input/image.jpg /path/to/output/image.jpg
+        ```
+
+1. Stream
+
+    * Read images from stream (see also `stream.py`)
+        ```
+        # source from camera
+        $ python stream.py -s=voc2007 -b=resnet101 -c=/path/to/checkpoint.pth -p=0.9 0 5
+        
+        # source from local file
+        $ python stream.py -s=voc2007 -b=resnet101 -c=/path/to/checkpoint.pth -p=0.9 /path/to/file.mp4 5
+        
+        # source from remote endpoint
+        $ python stream.py -s=voc2007 -b=resnet101 -c=/path/to/checkpoint.pth -p=0.9 rtsp://184.72.239.149/vod/mp4:BigBuckBunny_115k.mov 5
         ```
 
 

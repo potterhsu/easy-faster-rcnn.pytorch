@@ -16,7 +16,7 @@ from model import Model
 from roi.pooler import Pooler
 
 
-def _realtime(path_to_input_stream_endpoint: str, period_of_inference: int, path_to_checkpoint: str, dataset_name: str, backbone_name: str, prob_thresh: float):
+def _stream(path_to_input_stream_endpoint: str, period_of_inference: int, path_to_checkpoint: str, dataset_name: str, backbone_name: str, prob_thresh: float):
     dataset_class = DatasetBase.from_name(dataset_name)
     backbone = BackboneBase.from_name(backbone_name)(pretrained=False)
     model = Model(backbone, dataset_class.num_classes(), pooler_mode=Config.POOLER_MODE,
@@ -24,6 +24,8 @@ def _realtime(path_to_input_stream_endpoint: str, period_of_inference: int, path
                   rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N, rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N).cuda()
     model.load(path_to_checkpoint)
 
+    if path_to_input_stream_endpoint.isdigit():
+        path_to_input_stream_endpoint = int(path_to_input_stream_endpoint)
     video_capture = cv2.VideoCapture(path_to_input_stream_endpoint)
 
     with torch.no_grad():
@@ -63,12 +65,13 @@ def _realtime(path_to_input_stream_endpoint: str, period_of_inference: int, path
 
             elapse = time.time() - timestamp
             fps = 1 / elapse
-            cv2.putText(frame, f'FPS = {fps:.1f}', (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1, cv2.LINE_AA)
+            cv2.putText(frame, f'FPS = {fps:.1f}', (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1, cv2.LINE_AA)
 
             cv2.imshow('easy-faster-rcnn.pytorch', frame)
             if cv2.waitKey(10) == 27:
                 break
 
+    video_capture.release()
     cv2.destroyAllWindows()
 
 
@@ -106,6 +109,6 @@ if __name__ == '__main__':
             print(f'\t{k} = {v}')
         print(Config.describe())
 
-        _realtime(path_to_input_stream_endpoint, period_of_inference, path_to_checkpoint, dataset_name, backbone_name, prob_thresh)
+        _stream(path_to_input_stream_endpoint, period_of_inference, path_to_checkpoint, dataset_name, backbone_name, prob_thresh)
 
     main()
