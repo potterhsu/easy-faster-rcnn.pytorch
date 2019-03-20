@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf8">
+    <title>Web App</title>
+</head>
+
+<body>
+    <h3>Object Detection Web App</h3>
+
+    <label for="period">Inference Period:</label>
+    <input id="period" type="text" value="10" size="3" />
+    <br>
+    <br>
+    <label>Source:</label>
+    <input type="radio" name="source" value="camera" checked /> Camera
+    <input type="radio" name="source" value="file" /> File:
+    <input id="video-file" type="file" accept="video/*" />
+    <br>
+    <br>
+    <button onclick="start()">Start</button>
+    <button onclick="stop()">Stop</button>
+    <hr>
+    <video id="video" width="640" height="480" style="display:none" muted>
+    </video>
+    <canvas id="output-canvas" width="640" height="480"></canvas>
+
+    <script src="index.js"></script>
+    <script async src="opencv/opencv.js"></script>
+</body>
+
+</html>

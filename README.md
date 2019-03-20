@@ -388,21 +388,23 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 * torch 1.0
 * torchvision 0.2.1
 * tqdm
-
     ```
     $ pip install tqdm
     ```
 
 * tensorboardX
-
     ```
     $ pip install tensorboardX
     ```
     
-* OpenCV 3.4 (required by `stream.py` only)
-
+* OpenCV 3.4 (required by `infer_stream.py`)
     ```
     $ pip install opencv-python~=3.4
+    ```
+
+* websockets (required by `infer_websocket.py`)
+    ```
+    $ pip install websockets
     ```
 
 
@@ -573,19 +575,37 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
         $ bash ./scripts/voc2007/infer.sh resnet101 /path/to/checkpoint.pth /path/to/input/image.jpg /path/to/output/image.jpg
         ```
 
-1. Stream
+1. Infer other sources
 
-    * Read images from stream (see also `stream.py`)
+    * Source from stream (see also `infer_stream.py`)
         ```
-        # source from camera
-        $ python stream.py -s=voc2007 -b=resnet101 -c=/path/to/checkpoint.pth -p=0.9 0 5
+        # Camera
+        $ python infer_stream.py -s=voc2007 -b=resnet101 -c=/path/to/checkpoint.pth -p=0.9 0 5
         
-        # source from local file
-        $ python stream.py -s=voc2007 -b=resnet101 -c=/path/to/checkpoint.pth -p=0.9 /path/to/file.mp4 5
+        # Video
+        $ python infer_stream.py -s=voc2007 -b=resnet101 -c=/path/to/checkpoint.pth -p=0.9 /path/to/file.mp4 5
         
-        # source from remote endpoint
-        $ python stream.py -s=voc2007 -b=resnet101 -c=/path/to/checkpoint.pth -p=0.9 rtsp://184.72.239.149/vod/mp4:BigBuckBunny_115k.mov 5
+        # Remote
+        $ python infer_stream.py -s=voc2007 -b=resnet101 -c=/path/to/checkpoint.pth -p=0.9 rtsp://184.72.239.149/vod/mp4:BigBuckBunny_115k.mov 5
         ```
+        
+    * Source from websocket (see also `infer_websocket.py`)
+        1. Start web server
+            ```
+            $ cd webapp
+            $ php -S 0.0.0.0:8000 -t .
+            ```
+            
+        1. Launch service
+            ```
+            $ python infer_websocket.py -s=voc2007 -b=resnet101 -c=/path/to/checkpoint.pth -p=0.9
+            ```
+            
+        1. Navigate website: `http://127.0.0.1:8000/`
+        
+        ![](images/web-app.jpg)
+        
+        > Sample video from [Pexels](https://www.pexels.com/videos/)
 
 
 ## Notes
