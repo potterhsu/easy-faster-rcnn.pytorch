@@ -28,8 +28,6 @@ let Module = {
 };
 
 window.addEventListener("load", function() {
-    console.log("load");
-
     websocket = new WebSocket(URI);
     websocket.onopen = function(event) {
         console.log("CONNECTED");
@@ -46,7 +44,6 @@ window.addEventListener("load", function() {
 }, false);
 
 window.addEventListener("unload", function() {
-    console.log("unload");
     websocket.close();
 }, false);
 

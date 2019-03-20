@@ -593,7 +593,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
         1. Start web server
             ```
             $ cd webapp
-            $ php -S 0.0.0.0:8000 -t .
+            $ python -m http.server 8000
             ```
             
         1. Launch service
