@@ -603,9 +603,9 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             
         1. Navigate website: `http://127.0.0.1:8000/`
         
-        ![](images/web-app.jpg)
-        
-        > Sample video from [Pexels](https://www.pexels.com/videos/)
+            ![](images/web-app.jpg)
+            
+            > Sample video from [Pexels](https://www.pexels.com/videos/)
 
 
 ## Notes
