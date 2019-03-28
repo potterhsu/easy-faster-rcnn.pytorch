@@ -7,7 +7,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 
 ![](images/demo-result.jpg)
 
-1. Download checkpoint from [here](https://drive.google.com/open?id=1uaphqDLPj-VcH7YopeAn84HFPOFHmuQ5)
+1. Download checkpoint from [here](https://drive.google.com/open?id=1mQ9HV5nmGBM06mg1DjKWqBuKoipoBe5U)
 1. Follow the instructions in [Setup](#setup) 2 & 3
 1. Run inference script
     ```
@@ -330,8 +330,8 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <td>GTX 1080 Ti</td>
             <td>1</td>
             <td>2</td>
-            <td>~ 4.84</td>
-            <td>~ 8.00</td>
+            <td>4.84</td>
+            <td>8.00</td>
             <td>0.356</td>
             <td>0.562</td>
             <td>0.389</td>
@@ -358,6 +358,45 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <td>0.3333</td>
             <td>500</td>
             <td><b>720000</b></td>
+        </tr>
+        <tr>
+            <td>
+                <a href="https://drive.google.com/open?id=1faXOZXtImWfAXzfgpE6q5-2VP2lw39q1">
+                    Ours
+                </a>
+            </td>
+            <td>ResNet-101</td>
+            <td>Telsa P100</td>
+            <td>4</td>
+            <td>4</td>
+            <td>11.64</td>
+            <td>5.10</td>
+            <td>0.370</td>
+            <td>0.576</td>
+            <td>0.403</td>
+            <td>0.187</td>
+            <td>0.414</td>
+            <td>0.522</td>
+            <td><b>800</b></td>
+            <td><b>1333</b></td>
+            <td>[(1, 2), (1, 1), (2, 1)]</td>
+            <td><b>[64, 128, 256, 512]</b></td>
+            <td>align</td>
+            <td>12000</td>
+            <td>2000</td>
+            <td>6000</td>
+            <td><b>1000</b></td>
+            <td><b>0.1111</b></td>
+            <td>1.0</td>
+            <td><b>16</b></td>
+            <td><b>0.02</b></td>
+            <td>0.9</td>
+            <td><b>0.0001</b></td>
+            <td><b>[120000, 160000]</b></td>
+            <td>0.1</td>
+            <td>0.3333</td>
+            <td>500</td>
+            <td><b>180000</b></td>
         </tr>
     </table>
 
