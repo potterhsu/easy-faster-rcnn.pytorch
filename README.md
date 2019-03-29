@@ -290,7 +290,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
             <td>ResNet-101</td>
             <td>TITAN Xp</td>
             <td>8</td>
-            <td>16</td>
+            <td>2</td>
             <td>-</td>
             <td>-</td>
             <td>0.370</td>
