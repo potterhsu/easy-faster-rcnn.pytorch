@@ -6,7 +6,7 @@ from torch import nn, Tensor
 from torch.nn import functional as F
 
 from bbox import BBox
-from extention.functional import beta_smooth_l1_loss
+from extension.functional import beta_smooth_l1_loss
 from support.layer.nms import nms
 
 

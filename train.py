@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader
 from backbone.base import Base as BackboneBase
 from config.train_config import TrainConfig as Config
 from dataset.base import Base as DatasetBase
-from extention.lr_scheduler import WarmUpMultiStepLR
+from extension.lr_scheduler import WarmUpMultiStepLR
 from logger import Logger as Log
 from model import Model
 from roi.pooler import Pooler

@@ -9,7 +9,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 
 from backbone.base import Base as BackboneBase
 from bbox import BBox
-from extention.functional import beta_smooth_l1_loss
+from extension.functional import beta_smooth_l1_loss
 from roi.pooler import Pooler
 from rpn.region_proposal_network import RegionProposalNetwork
 from support.layer.nms import nms
