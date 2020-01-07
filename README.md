@@ -7,6 +7,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 
 ![](images/demo-result.jpg)
 
+1. Check the requirements below
 1. Download checkpoint from [here](https://drive.google.com/open?id=1mQ9HV5nmGBM06mg1DjKWqBuKoipoBe5U)
 1. Follow the instructions in [Setup](#setup) 2 & 3
 1. Run inference script
@@ -446,6 +447,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
     $ pip install websockets
     ```
 
+* [Nvidia's GPU development platform CUDA](https://developer.nvidia.com/cuda-toolkit), and a supported Nvidia hardware graphics card
 
 ## Setup
 
