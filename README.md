@@ -427,23 +427,12 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
 * torch 1.0
 * torchvision 0.2.1
 * tqdm
-    ```
-    $ pip install tqdm
-    ```
-
 * tensorboardX
-    ```
-    $ pip install tensorboardX
-    ```
-    
 * OpenCV 3.4 (required by `infer_stream.py`)
-    ```
-    $ pip install opencv-python~=3.4
-    ```
-
 * websockets (required by `infer_websocket.py`)
     ```
-    $ pip install websockets
+    $ conda install -c conda-forge cython opencv tqdm tensorboardx 
+    $ conda install pytorch torchvision cudatoolkit=10.1 -c pytorch
     ```
 
 
@@ -551,7 +540,7 @@ An easy implementation of [Faster R-CNN](https://arxiv.org/pdf/1506.01497.pdf) i
     1. If an error with message `pycocotools/_mask.c: No such file or directory` has occurred, please install `cython` and try again
 
         ```
-        $ pip install cython
+        $ conda install -c conda-forge cython
         ```
 
     1. Copy `pycocotools` into project
