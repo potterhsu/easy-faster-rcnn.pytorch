@@ -17,10 +17,12 @@ class Base(torch.utils.data.dataset.Dataset):
         TRAIN = 'train'
         EVAL = 'eval'
 
-    OPTIONS = ['voc2007', 'coco2017', 'voc2007-cat-dog', 'coco2017-person', 'coco2017-car', 'coco2017-animal']
+    OPTIONS = ['voc2007', 'coco2017', 'voc2007-cat-dog', \
+                'coco2017-person', 'coco2017-car', 'coco2017-animal',\
+                'khnp']
 
     @staticmethod
-    def from_name(name: str) -> Type['Base']:
+    def from_name(name: str): #-> Type['Base']:
         if name == 'voc2007':
             from dataset.voc2007 import VOC2007
             return VOC2007
@@ -39,6 +41,9 @@ class Base(torch.utils.data.dataset.Dataset):
         elif name == 'coco2017-animal':
             from dataset.coco2017_animal import COCO2017Animal
             return COCO2017Animal
+        elif name == 'khnp':
+            from dataset.voc_khnp import VOCKHNP
+            return VOCKHNP
         else:
             raise ValueError
 
@@ -48,28 +53,36 @@ class Base(torch.utils.data.dataset.Dataset):
         self._image_min_side = image_min_side
         self._image_max_side = image_max_side
 
-    def __len__(self) -> int:
+    def __len__(self):# -> int:
         raise NotImplementedError
 
-    def __getitem__(self, index: int) -> Tuple[str, Tensor, Tensor, Tensor, Tensor]:
+    def __getitem__(self, index: int):# -> Tuple[str, Tensor, Tensor, Tensor, Tensor]:
         raise NotImplementedError
 
-    def evaluate(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], classes: List[int], probs: List[float]) -> Tuple[float, str]:
+    def evaluate(self, path_to_results_dir: str, 
+                        image_ids: List[str], 
+                        bboxes: List[List[float]], 
+                        classes: List[int], 
+                        probs: List[float]):# -> Tuple[float, str]:
         raise NotImplementedError
 
-    def _write_results(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], classes: List[int], probs: List[float]):
+    def _write_results(self, path_to_results_dir: str, 
+                       image_ids: List[str], 
+                       bboxes: List[List[float]], 
+                       classes: List[int], 
+                       probs: List[float]):
         raise NotImplementedError
 
     @property
-    def image_ratios(self) -> List[float]:
+    def image_ratios(self):# -> List[float]:
         raise NotImplementedError
 
     @staticmethod
-    def num_classes() -> int:
+    def num_classes():# -> int:
         raise NotImplementedError
 
     @staticmethod
-    def preprocess(image: PIL.Image.Image, image_min_side: float, image_max_side: float) -> Tuple[Tensor, float]:
+    def preprocess(image: PIL.Image.Image, image_min_side: float, image_max_side: float):# -> Tuple[Tensor, float]:
         # resize according to the rules:
         #   1. scale shorter side to IMAGE_MIN_SIDE
         #   2. after scaling, if longer side > IMAGE_MAX_SIDE, scale longer side to IMAGE_MAX_SIDE
@@ -88,7 +101,7 @@ class Base(torch.utils.data.dataset.Dataset):
         return image, scale
 
     @staticmethod
-    def padding_collate_fn(batch: List[Tuple[str, Tensor, Tensor, Tensor, Tensor]]) -> Tuple[List[str], Tensor, Tensor, Tensor, Tensor]:
+    def padding_collate_fn(batch: List[Tuple[str, Tensor, Tensor, Tensor, Tensor]]):# -> Tuple[List[str], Tensor, Tensor, Tensor, Tensor]:
         image_id_batch, image_batch, scale_batch, bboxes_batch, labels_batch = zip(*batch)
 
         max_image_width = max([it.shape[2] for it in image_batch])
@@ -127,10 +140,10 @@ class Base(torch.utils.data.dataset.Dataset):
             self._image_ratios = image_ratios
             self._num_neighbors = num_neighbors
 
-        def __len__(self) -> int:
+        def __len__(self):# -> int:
             return len(self._image_ratios)
 
-        def __iter__(self) -> Iterator[int]:
+        def __iter__(self):# -> Iterator[int]:
             image_ratios = torch.tensor(self._image_ratios)
             tall_indices = (image_ratios < 1).nonzero().view(-1)
             fat_indices = (image_ratios >= 1).nonzero().view(-1)
