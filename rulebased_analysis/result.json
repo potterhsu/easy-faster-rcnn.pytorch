@@ -1,0 +1,74 @@
+{
+	"Motor_1": {
+		"count": 10146,
+		"tmin": 30.14,
+		"tmax": 57.05,
+		"tmean": 43.04
+	},
+	"Motor_2": {
+		"count": 7289,
+		"tmin": 31.79,
+		"tmax": 61.95,
+		"tmean": 49.24
+	},
+	"TB": {
+		"count": 8316,
+		"tmin": 30.62,
+		"tmax": 51.76,
+		"tmean": 35.11
+	},
+	"Mortor_1": {
+		"count": 1823,
+		"tmin": 29.5,
+		"tmax": 45.49,
+		"tmean": 36.81
+	},
+	"Tf_3": {
+		"count": 10163,
+		"tmin": 35.48,
+		"tmax": 53.82,
+		"tmean": 42.93
+	},
+	"Tf_1": {
+		"count": 10342,
+		"tmin": 27.31,
+		"tmax": 35.85,
+		"tmean": 31.34
+	},
+	"Tf_2": {
+		"count": 4198,
+		"tmin": 24.14,
+		"tmax": 35.45,
+		"tmean": 30.58
+	},
+	"LC_2": {
+		"count": 36000,
+		"tmin": 19.34,
+		"tmax": 23.8,
+		"tmean": 20.56
+	},
+	"LC_1": {
+		"count": 33502,
+		"tmin": 18.31,
+		"tmax": 22.99,
+		"tmean": 19.0
+	},
+	"Bearing_1": {
+		"count": 643,
+		"tmin": 29.86,
+		"tmax": 34.26,
+		"tmean": 33.21
+	},
+	"Mortor_2": {
+		"count": 256,
+		"tmin": 29.83,
+		"tmax": 32.56,
+		"tmean": 31.85
+	},
+	"Pump": {
+		"count": 323,
+		"tmin": 35.12,
+		"tmax": 56.97,
+		"tmean": 48.98
+	}
+}
