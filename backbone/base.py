@@ -8,7 +8,7 @@ class Base(object):
     OPTIONS = ['resnet18', 'resnet50', 'resnet101']
 
     @staticmethod
-    def from_name(name: str) -> Type['Base']:
+    def from_name(name: str):# -> Type['Base']:
         if name == 'resnet18':
             from backbone.resnet18 import ResNet18
             return ResNet18
@@ -25,5 +25,5 @@ class Base(object):
         super().__init__()
         self._pretrained = pretrained
 
-    def features(self) -> Tuple[nn.Module, nn.Module, int, int]:
+    def features(self):# -> Tuple[nn.Module, nn.Module, int, int]:
         raise NotImplementedError

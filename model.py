@@ -17,15 +17,20 @@ from support.layer.nms import nms
 
 class Model(nn.Module):
 
-    def __init__(self, backbone: BackboneBase, num_classes: int, pooler_mode: Pooler.Mode,
-                 anchor_ratios: List[Tuple[int, int]], anchor_sizes: List[int],
-                 rpn_pre_nms_top_n: int, rpn_post_nms_top_n: int,
-                 anchor_smooth_l1_loss_beta: Optional[float] = None, proposal_smooth_l1_loss_beta: Optional[float] = None):
+    def __init__(self, backbone: BackboneBase, 
+                        num_classes: int, 
+                        pooler_mode: Pooler.Mode,
+                        anchor_ratios: List[Tuple[int, int]], 
+                        anchor_sizes: List[int],
+                        rpn_pre_nms_top_n: int, 
+                        rpn_post_nms_top_n: int,
+                        anchor_smooth_l1_loss_beta: Optional[float] = None, 
+                        proposal_smooth_l1_loss_beta: Optional[float] = None):
         super().__init__()
 
         self.features, hidden, num_features_out, num_hidden_out = backbone.features()
         self._bn_modules = nn.ModuleList([it for it in self.features.modules() if isinstance(it, nn.BatchNorm2d)] +
-                                         [it for it in hidden.modules() if isinstance(it, nn.BatchNorm2d)])
+                                                                [it for it in hidden.modules() if isinstance(it, nn.BatchNorm2d)])
 
         # NOTE: It's crucial to freeze batch normalization modules for few batches training, which can be done by following processes
         #       (1) Change mode to `eval`
@@ -38,8 +43,9 @@ class Model(nn.Module):
         self.detection = Model.Detection(pooler_mode, hidden, num_hidden_out, num_classes, proposal_smooth_l1_loss_beta)
 
     def forward(self, image_batch: Tensor,
-                gt_bboxes_batch: Tensor = None, gt_classes_batch: Tensor = None) -> Union[Tuple[Tensor, Tensor, Tensor, Tensor],
-                                                                                          Tuple[Tensor, Tensor, Tensor, Tensor]]:
+                        gt_bboxes_batch: Tensor = None, 
+                        gt_classes_batch: Tensor = None):# -> Union[Tuple[Tensor, Tensor, Tensor, Tensor], Tuple[Tensor, Tensor, Tensor, Tensor]]:
+        
         # disable gradient for each forwarding process just in case model was switched to `train` mode at any time
         for bn_module in self._bn_modules:
             bn_module.eval()
@@ -63,7 +69,7 @@ class Model(nn.Module):
             detection_bboxes, detection_classes, detection_probs, detection_batch_indices = self.detection.generate_detections(proposal_bboxes, proposal_classes, proposal_transformers, image_width, image_height)
             return detection_bboxes, detection_classes, detection_probs, detection_batch_indices
 
-    def save(self, path_to_checkpoints_dir: str, step: int, optimizer: Optimizer, scheduler: _LRScheduler) -> str:
+    def save(self, path_to_checkpoints_dir: str, step: int, optimizer: Optimizer, scheduler: _LRScheduler):# -> str:
         path_to_checkpoint = os.path.join(path_to_checkpoints_dir, f'model-{step}.pth')
         checkpoint = {
             'state_dict': self.state_dict(),
@@ -74,7 +80,7 @@ class Model(nn.Module):
         torch.save(checkpoint, path_to_checkpoint)
         return path_to_checkpoint
 
-    def load(self, path_to_checkpoint: str, optimizer: Optimizer = None, scheduler: _LRScheduler = None) -> 'Model':
+    def load(self, path_to_checkpoint: str, optimizer: Optimizer = None, scheduler: _LRScheduler = None):# -> 'Model':
         checkpoint = torch.load(path_to_checkpoint)
         self.load_state_dict(checkpoint['state_dict'])
         step = checkpoint['step']
@@ -86,7 +92,11 @@ class Model(nn.Module):
 
     class Detection(nn.Module):
 
-        def __init__(self, pooler_mode: Pooler.Mode, hidden: nn.Module, num_hidden_out: int, num_classes: int, proposal_smooth_l1_loss_beta: float):
+        def __init__(self, pooler_mode: Pooler.Mode, 
+                            hidden: nn.Module, 
+                            num_hidden_out: int, 
+                            num_classes: int, 
+                            proposal_smooth_l1_loss_beta: float):
             super().__init__()
             self._pooler_mode = pooler_mode
             self.hidden = hidden
@@ -97,8 +107,10 @@ class Model(nn.Module):
             self._transformer_normalize_mean = torch.tensor([0., 0., 0., 0.], dtype=torch.float)
             self._transformer_normalize_std = torch.tensor([.1, .1, .2, .2], dtype=torch.float)
 
-        def forward(self, features: Tensor, proposal_bboxes: Tensor,
-                    gt_classes_batch: Optional[Tensor] = None, gt_bboxes_batch: Optional[Tensor] = None) -> Union[Tuple[Tensor, Tensor], Tuple[Tensor, Tensor, Tensor, Tensor]]:
+        def forward(self, features: Tensor, 
+                            proposal_bboxes: Tensor,
+                            gt_classes_batch: Optional[Tensor] = None, 
+                            gt_bboxes_batch: Optional[Tensor] = None):# -> Union[Tuple[Tensor, Tensor], Tuple[Tensor, Tensor, Tensor, Tensor]]:
             batch_size = features.shape[0]
 
             if not self.training:
@@ -146,14 +158,17 @@ class Model(nn.Module):
                 proposal_classes = self._proposal_class(hidden)
                 proposal_transformers = self._proposal_transformer(hidden)
                 proposal_class_losses, proposal_transformer_losses = self.loss(proposal_classes, proposal_transformers,
-                                                                               gt_proposal_classes, gt_proposal_transformers,
-                                                                               batch_size, batch_indices)
+                                                                                                                        gt_proposal_classes, gt_proposal_transformers,
+                                                                                                                        batch_size, batch_indices)
 
                 return proposal_classes, proposal_transformers, proposal_class_losses, proposal_transformer_losses
 
-        def loss(self, proposal_classes: Tensor, proposal_transformers: Tensor,
-                 gt_proposal_classes: Tensor, gt_proposal_transformers: Tensor,
-                 batch_size, batch_indices) -> Tuple[Tensor, Tensor]:
+        def loss(self, proposal_classes: Tensor, 
+                    proposal_transformers: Tensor,
+                    gt_proposal_classes: Tensor, 
+                    gt_proposal_transformers: Tensor,
+                    batch_size, 
+                    batch_indices):# -> Tuple[Tensor, Tensor]:
             proposal_transformers = proposal_transformers.view(-1, self.num_classes, 4)[torch.arange(end=len(proposal_transformers), dtype=torch.long), gt_proposal_classes]
             transformer_normalize_mean = self._transformer_normalize_mean.to(device=gt_proposal_transformers.device)
             transformer_normalize_std = self._transformer_normalize_std.to(device=gt_proposal_transformers.device)
@@ -170,15 +185,19 @@ class Model(nn.Module):
 
                 fg_indices = gt_proposal_classes[selected_indices].nonzero().view(-1)
                 smooth_l1_loss = beta_smooth_l1_loss(input=proposal_transformers[selected_indices][fg_indices],
-                                                     target=gt_proposal_transformers[selected_indices][fg_indices],
-                                                     beta=self._proposal_smooth_l1_loss_beta)
+                                                                            target=gt_proposal_transformers[selected_indices][fg_indices],
+                                                                            beta=self._proposal_smooth_l1_loss_beta)
 
                 cross_entropies[batch_index] = cross_entropy
                 smooth_l1_losses[batch_index] = smooth_l1_loss
 
             return cross_entropies, smooth_l1_losses
 
-        def generate_detections(self, proposal_bboxes: Tensor, proposal_classes: Tensor, proposal_transformers: Tensor, image_width: int, image_height: int) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+        def generate_detections(self, proposal_bboxes: Tensor, 
+                                                proposal_classes: Tensor, 
+                                                proposal_transformers: Tensor, 
+                                                image_width: int, 
+                                                image_height: int):# -> Tuple[Tensor, Tensor, Tensor, Tensor]:
             batch_size = proposal_bboxes.shape[0]
 
             proposal_transformers = proposal_transformers.view(batch_size, -1, self.num_classes, 4)

@@ -67,10 +67,10 @@ class Base(torch.utils.data.dataset.Dataset):
         raise NotImplementedError
 
     def _write_results(self, path_to_results_dir: str, 
-                       image_ids: List[str], 
-                       bboxes: List[List[float]], 
-                       classes: List[int], 
-                       probs: List[float]):
+                        image_ids: List[str], 
+                        bboxes: List[List[float]], 
+                        classes: List[int], 
+                        probs: List[float]):
         raise NotImplementedError
 
     @property

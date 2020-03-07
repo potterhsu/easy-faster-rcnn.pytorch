@@ -20,9 +20,12 @@ def _eval(path_to_checkpoint: str, dataset_name: str, backbone_name: str, path_t
     Log.i('Found {:d} samples'.format(len(dataset)))
 
     backbone = BackboneBase.from_name(backbone_name)(pretrained=False)
-    model = Model(backbone, dataset.num_classes(), pooler_mode=Config.POOLER_MODE,
-                  anchor_ratios=Config.ANCHOR_RATIOS, anchor_sizes=Config.ANCHOR_SIZES,
-                  rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N, rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N).cuda()
+    model = Model(backbone, dataset.num_classes(), 
+                        pooler_mode=Config.POOLER_MODE,
+                        anchor_ratios=Config.ANCHOR_RATIOS, 
+                        anchor_sizes=Config.ANCHOR_SIZES,
+                        rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N, 
+                        rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N).cuda()
     model.load(path_to_checkpoint)
 
     Log.i('Start evaluating with 1 GPU (1 batch per GPU)')
@@ -59,9 +62,13 @@ if __name__ == '__main__':
             str(uuid.uuid4()).split('-')[0]))
         os.makedirs(path_to_results_dir)
 
-        Config.setup(image_min_side=args.image_min_side, image_max_side=args.image_max_side,
-                     anchor_ratios=args.anchor_ratios, anchor_sizes=args.anchor_sizes, pooler_mode=args.pooler_mode,
-                     rpn_pre_nms_top_n=args.rpn_pre_nms_top_n, rpn_post_nms_top_n=args.rpn_post_nms_top_n)
+        Config.setup(image_min_side=args.image_min_side, 
+                            image_max_side=args.image_max_side,
+                            anchor_ratios=args.anchor_ratios, 
+                            anchor_sizes=args.anchor_sizes, 
+                            pooler_mode=args.pooler_mode,
+                            rpn_pre_nms_top_n=args.rpn_pre_nms_top_n, 
+                            rpn_post_nms_top_n=args.rpn_post_nms_top_n)
 
         Log.initialize(os.path.join(path_to_results_dir, 'eval.log'))
         Log.i('Arguments:')

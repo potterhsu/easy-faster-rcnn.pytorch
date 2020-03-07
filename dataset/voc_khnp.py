@@ -129,10 +129,10 @@ class VOCKHNP(Base):
         return image_id, image, scale, bboxes, labels
 
     def evaluate(self, path_to_results_dir: str, 
-                 image_ids: List[str], 
-                 bboxes: List[List[float]], 
-                 classes: List[int], 
-                 probs: List[float]):# -> Tuple[float, str]:
+                image_ids: List[str], 
+                bboxes: List[List[float]], 
+                classes: List[int], 
+                probs: List[float]):# -> Tuple[float, str]:
 
         self._write_results(path_to_results_dir, image_ids, bboxes, classes, probs)
 
@@ -148,7 +148,7 @@ class VOCKHNP(Base):
                 path_to_cache_dir = os.path.join('caches', 'voc2007')
                 os.makedirs(path_to_cache_dir, exist_ok=True)
                 _, _, ap = voc_eval(detpath=os.path.join(path_to_results_dir, 'comp3_det_test_{:s}.txt'.format(category)),
-                                    annopath=os.path.join(path_to_annotations_dir, '{:s}.xml'),
+                                    annopath=path_to_annotations_dir,
                                     imagesetfile=os.path.join(path_to_main_dir, 'test.txt'),
                                     classname=category,
                                     cachedir=path_to_cache_dir,
@@ -168,11 +168,11 @@ class VOCKHNP(Base):
         return mean_ap, detail
 
     def _write_results(self, 
-                       path_to_results_dir: str, 
-                       image_ids: List[str], 
-                       bboxes: List[List[float]], 
-                       classes: List[int], 
-                       probs: List[float]):
+                                    path_to_results_dir: str, 
+                                    image_ids: List[str], 
+                                    bboxes: List[List[float]], 
+                                    classes: List[int], 
+                                    probs: List[float]):
         
         class_to_txt_files_dict = {}
         for c in range(0, VOCKHNP.num_classes()):

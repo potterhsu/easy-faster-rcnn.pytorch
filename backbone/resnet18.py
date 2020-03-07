@@ -11,7 +11,7 @@ class ResNet18(backbone.base.Base):
     def __init__(self, pretrained: bool):
         super().__init__(pretrained)
 
-    def features(self) -> Tuple[nn.Module, nn.Module, int, int]:
+    def features(self):# -> Tuple[nn.Module, nn.Module, int, int]:
         resnet18 = torchvision.models.resnet18(pretrained=self._pretrained)
 
         # list(resnet18.children()) consists of following modules

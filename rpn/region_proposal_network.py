@@ -12,8 +12,12 @@ from support.layer.nms import nms
 
 class RegionProposalNetwork(nn.Module):
 
-    def __init__(self, num_features_out: int, anchor_ratios: List[Tuple[int, int]], anchor_sizes: List[int],
-                 pre_nms_top_n: int, post_nms_top_n: int, anchor_smooth_l1_loss_beta: float):
+    def __init__(self, num_features_out: int, 
+                        anchor_ratios: List[Tuple[int, int]], 
+                        anchor_sizes: List[int],
+                        pre_nms_top_n: int, 
+                        post_nms_top_n: int, 
+                        anchor_smooth_l1_loss_beta: float):
         super().__init__()
 
         self._features = nn.Sequential(
@@ -36,8 +40,10 @@ class RegionProposalNetwork(nn.Module):
         self._anchor_transformer = nn.Conv2d(in_channels=512, out_channels=num_anchors * 4, kernel_size=1)
 
     def forward(self, features: Tensor,
-                anchor_bboxes: Optional[Tensor] = None, gt_bboxes_batch: Optional[Tensor] = None,
-                image_width: Optional[int]=None, image_height: Optional[int]=None) -> Union[Tuple[Tensor, Tensor], Tuple[Tensor, Tensor, Tensor, Tensor]]:
+                anchor_bboxes: Optional[Tensor] = None, 
+                gt_bboxes_batch: Optional[Tensor] = None,
+                image_width: Optional[int]=None, 
+                image_height: Optional[int]=None):# -> Union[Tuple[Tensor, Tensor], Tuple[Tensor, Tensor, Tensor, Tensor]]:
         batch_size = features.shape[0]
 
         features = self._features(features)
@@ -82,16 +88,18 @@ class RegionProposalNetwork(nn.Module):
             batch_indices = selected_indices[0]
 
             anchor_objectness_losses, anchor_transformer_losses = self.loss(inside_anchor_objectnesses[selected_indices],
-                                                                            inside_anchor_transformers[selected_indices],
-                                                                            gt_anchor_objectnesses,
-                                                                            gt_anchor_transformers,
-                                                                            batch_size, batch_indices)
+                                                                                                                    inside_anchor_transformers[selected_indices],
+                                                                                                                    gt_anchor_objectnesses,
+                                                                                                                    gt_anchor_transformers,
+                                                                                                                    batch_size, batch_indices)
 
             return anchor_objectnesses, anchor_transformers, anchor_objectness_losses, anchor_transformer_losses
 
-    def loss(self, anchor_objectnesses: Tensor, anchor_transformers: Tensor,
-             gt_anchor_objectnesses: Tensor, gt_anchor_transformers: Tensor,
-             batch_size: int, batch_indices: Tensor) -> Tuple[Tensor, Tensor]:
+    def loss(self, anchor_objectnesses: Tensor, 
+                    anchor_transformers: Tensor,
+                    gt_anchor_objectnesses: Tensor, 
+                    gt_anchor_transformers: Tensor,
+                    batch_size: int, batch_indices: Tensor):# -> Tuple[Tensor, Tensor]:
         cross_entropies = torch.empty(batch_size, dtype=torch.float, device=anchor_objectnesses.device)
         smooth_l1_losses = torch.empty(batch_size, dtype=torch.float, device=anchor_transformers.device)
 
@@ -103,15 +111,18 @@ class RegionProposalNetwork(nn.Module):
 
             fg_indices = gt_anchor_objectnesses[selected_indices].nonzero().view(-1)
             smooth_l1_loss = beta_smooth_l1_loss(input=anchor_transformers[selected_indices][fg_indices],
-                                                 target=gt_anchor_transformers[selected_indices][fg_indices],
-                                                 beta=self._anchor_smooth_l1_loss_beta)
+                                                target=gt_anchor_transformers[selected_indices][fg_indices],
+                                                beta=self._anchor_smooth_l1_loss_beta)
 
             cross_entropies[batch_index] = cross_entropy
             smooth_l1_losses[batch_index] = smooth_l1_loss
 
         return cross_entropies, smooth_l1_losses
 
-    def generate_anchors(self, image_width: int, image_height: int, num_x_anchors: int, num_y_anchors: int) -> Tensor:
+    def generate_anchors(self, image_width: int, 
+                                        image_height: int, 
+                                        num_x_anchors: int, 
+                                        num_y_anchors: int):# -> Tensor:
         center_ys = np.linspace(start=0, stop=image_height, num=num_y_anchors + 2)[1:-1]
         center_xs = np.linspace(start=0, stop=image_width, num=num_x_anchors + 2)[1:-1]
         ratios = np.array(self._anchor_ratios)
@@ -136,7 +147,11 @@ class RegionProposalNetwork(nn.Module):
 
         return anchor_bboxes
 
-    def generate_proposals(self, anchor_bboxes: Tensor, objectnesses: Tensor, transformers: Tensor, image_width: int, image_height: int) -> Tensor:
+    def generate_proposals(self, anchor_bboxes: Tensor, 
+                                        objectnesses: Tensor, 
+                                        transformers: Tensor, 
+                                        image_width: int, 
+                                        image_height: int):# -> Tensor:
         batch_size = anchor_bboxes.shape[0]
 
         proposal_bboxes = BBox.apply_transformer(anchor_bboxes, transformers)

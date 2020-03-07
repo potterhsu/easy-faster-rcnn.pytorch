@@ -20,27 +20,43 @@ from model import Model
 from roi.pooler import Pooler
 
 
-def _train(dataset_name: str, backbone_name: str, path_to_data_dir: str, path_to_checkpoints_dir: str, path_to_resuming_checkpoint: Optional[str]):
+def _train(dataset_name: str, 
+                backbone_name: str, 
+                path_to_data_dir: str, 
+                path_to_checkpoints_dir: str, 
+                path_to_resuming_checkpoint: Optional[str]):
     dataset = DatasetBase.from_name(dataset_name)(path_to_data_dir, DatasetBase.Mode.TRAIN, Config.IMAGE_MIN_SIDE, Config.IMAGE_MAX_SIDE)
-    dataloader = DataLoader(dataset, batch_size=Config.BATCH_SIZE,
-                            sampler=DatasetBase.NearestRatioRandomSampler(dataset.image_ratios, num_neighbors=Config.BATCH_SIZE),
-                            num_workers=8, collate_fn=DatasetBase.padding_collate_fn, pin_memory=True)
+    dataloader = DataLoader(dataset, 
+                                            batch_size=Config.BATCH_SIZE,
+                                            sampler=DatasetBase.NearestRatioRandomSampler(dataset.image_ratios, num_neighbors=Config.BATCH_SIZE),
+                                            num_workers=8, 
+                                            collate_fn=DatasetBase.padding_collate_fn, 
+                                            pin_memory=True)
 
     Log.i('Found {:d} samples'.format(len(dataset)))
 
     backbone = BackboneBase.from_name(backbone_name)(pretrained=True)
     model = nn.DataParallel(
         Model(
-            backbone, dataset.num_classes(), pooler_mode=Config.POOLER_MODE,
-            anchor_ratios=Config.ANCHOR_RATIOS, anchor_sizes=Config.ANCHOR_SIZES,
-            rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N, rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N,
-            anchor_smooth_l1_loss_beta=Config.ANCHOR_SMOOTH_L1_LOSS_BETA, proposal_smooth_l1_loss_beta=Config.PROPOSAL_SMOOTH_L1_LOSS_BETA
-        ).cuda()
+                    backbone, dataset.num_classes(), 
+                    pooler_mode=Config.POOLER_MODE,
+                    anchor_ratios=Config.ANCHOR_RATIOS, 
+                    anchor_sizes=Config.ANCHOR_SIZES,
+                    rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N, 
+                    rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N,
+                    anchor_smooth_l1_loss_beta=Config.ANCHOR_SMOOTH_L1_LOSS_BETA, 
+                    proposal_smooth_l1_loss_beta=Config.PROPOSAL_SMOOTH_L1_LOSS_BETA
+                ).cuda()
     )
-    optimizer = optim.SGD(model.parameters(), lr=Config.LEARNING_RATE,
-                          momentum=Config.MOMENTUM, weight_decay=Config.WEIGHT_DECAY)
-    scheduler = WarmUpMultiStepLR(optimizer, milestones=Config.STEP_LR_SIZES, gamma=Config.STEP_LR_GAMMA,
-                                  factor=Config.WARM_UP_FACTOR, num_iters=Config.WARM_UP_NUM_ITERS)
+    optimizer = optim.SGD(model.parameters(), 
+                                        lr=Config.LEARNING_RATE,
+                                        momentum=Config.MOMENTUM, 
+                                        weight_decay=Config.WEIGHT_DECAY)
+    scheduler = WarmUpMultiStepLR(optimizer, 
+                                                    milestones=Config.STEP_LR_SIZES, 
+                                                    gamma=Config.STEP_LR_GAMMA,
+                                                    factor=Config.WARM_UP_FACTOR, 
+                                                    num_iters=Config.WARM_UP_NUM_ITERS)
 
     step = 0
     time_checkpoint = time.time()
@@ -152,14 +168,27 @@ if __name__ == '__main__':
             time.strftime('%Y%m%d%H%M%S'), dataset_name, backbone_name, str(uuid.uuid4()).split('-')[0]))
         os.makedirs(path_to_checkpoints_dir)
 
-        Config.setup(image_min_side=args.image_min_side, image_max_side=args.image_max_side,
-                     anchor_ratios=args.anchor_ratios, anchor_sizes=args.anchor_sizes, pooler_mode=args.pooler_mode,
-                     rpn_pre_nms_top_n=args.rpn_pre_nms_top_n, rpn_post_nms_top_n=args.rpn_post_nms_top_n,
-                     anchor_smooth_l1_loss_beta=args.anchor_smooth_l1_loss_beta, proposal_smooth_l1_loss_beta=args.proposal_smooth_l1_loss_beta,
-                     batch_size=args.batch_size, learning_rate=args.learning_rate, momentum=args.momentum, weight_decay=args.weight_decay,
-                     step_lr_sizes=args.step_lr_sizes, step_lr_gamma=args.step_lr_gamma,
-                     warm_up_factor=args.warm_up_factor, warm_up_num_iters=args.warm_up_num_iters,
-                     num_steps_to_display=args.num_steps_to_display, num_steps_to_snapshot=args.num_steps_to_snapshot, num_steps_to_finish=args.num_steps_to_finish)
+        Config.setup(image_min_side=args.image_min_side, 
+                            image_max_side=args.image_max_side,
+                            anchor_ratios=args.anchor_ratios, 
+                            anchor_sizes=args.anchor_sizes, 
+                            pooler_mode=args.pooler_mode,
+                            rpn_pre_nms_top_n=args.rpn_pre_nms_top_n, 
+                            rpn_post_nms_top_n=args.rpn_post_nms_top_n,
+                            anchor_smooth_l1_loss_beta=args.anchor_smooth_l1_loss_beta, 
+                            proposal_smooth_l1_loss_beta=args.proposal_smooth_l1_loss_beta,
+                            batch_size=args.batch_size, 
+                            learning_rate=args.learning_rate, 
+                            momentum=args.momentum, 
+                            weight_decay=args.weight_decay,
+                            step_lr_sizes=args.step_lr_sizes, 
+                            step_lr_gamma=args.step_lr_gamma,
+                            warm_up_factor=args.warm_up_factor, 
+                            warm_up_num_iters=args.warm_up_num_iters,
+                            num_steps_to_display=args.num_steps_to_display, 
+                            num_steps_to_snapshot=args.num_steps_to_snapshot, 
+                            num_steps_to_finish=args.num_steps_to_finish)
+
 
         Log.initialize(os.path.join(path_to_checkpoints_dir, 'train.log'))
         Log.i('Arguments:')

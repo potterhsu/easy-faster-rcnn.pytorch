@@ -135,7 +135,7 @@ def heatMapConvert(data, bboxes=None,specific_cm=None, tool='cv', is_random=Fals
                                                     'gist_rainbow', 'rainbow', 'jet', 'nipy_spectral', 'gist_ncar']
         colormap['Cyclic']=['hsv','twilight','twilight_shifted']
         methods = colormap['Perceptually Uniform Sequential']+colormap['Sequential (2)']+\
-                         colormap['Qualitative'] + colormap['Miscellaneous'] + colormap['Cyclic']
+                        colormap['Qualitative'] + colormap['Miscellaneous'] + colormap['Cyclic']
         # try:
         #Metplotlib Method
         
