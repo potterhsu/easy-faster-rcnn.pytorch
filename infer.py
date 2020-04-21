@@ -16,9 +16,12 @@ from config.eval_config import EvalConfig as Config
 def _infer(path_to_input_image: str, path_to_output_image: str, path_to_checkpoint: str, dataset_name: str, backbone_name: str, prob_thresh: float):
     dataset_class = DatasetBase.from_name(dataset_name)
     backbone = BackboneBase.from_name(backbone_name)(pretrained=False)
-    model = Model(backbone, dataset_class.num_classes(), pooler_mode=Config.POOLER_MODE,
-                  anchor_ratios=Config.ANCHOR_RATIOS, anchor_sizes=Config.ANCHOR_SIZES,
-                  rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N, rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N).cuda()
+    model = Model(backbone, dataset_class.num_classes(), 
+                pooler_mode=Config.POOLER_MODE,
+                anchor_ratios=Config.ANCHOR_RATIOS, 
+                anchor_sizes=Config.ANCHOR_SIZES,
+                rpn_pre_nms_top_n=Config.RPN_PRE_NMS_TOP_N, 
+                rpn_post_nms_top_n=Config.RPN_POST_NMS_TOP_N).cuda()
     model.load(path_to_checkpoint)
 
     with torch.no_grad():
@@ -75,9 +78,13 @@ if __name__ == '__main__':
 
         os.makedirs(os.path.join(os.path.curdir, os.path.dirname(path_to_output_image)), exist_ok=True)
 
-        Config.setup(image_min_side=args.image_min_side, image_max_side=args.image_max_side,
-                     anchor_ratios=args.anchor_ratios, anchor_sizes=args.anchor_sizes, pooler_mode=args.pooler_mode,
-                     rpn_pre_nms_top_n=args.rpn_pre_nms_top_n, rpn_post_nms_top_n=args.rpn_post_nms_top_n)
+        Config.setup(image_min_side=args.image_min_side, 
+                            image_max_side=args.image_max_side,
+                            anchor_ratios=args.anchor_ratios, 
+                            anchor_sizes=args.anchor_sizes, 
+                            pooler_mode=args.pooler_mode,
+                            rpn_pre_nms_top_n=args.rpn_pre_nms_top_n, 
+                            rpn_post_nms_top_n=args.rpn_post_nms_top_n)
 
         print('Arguments:')
         for k, v in vars(args).items():
@@ -85,5 +92,5 @@ if __name__ == '__main__':
         print(Config.describe())
 
         _infer(path_to_input_image, path_to_output_image, path_to_checkpoint, dataset_name, backbone_name, prob_thresh)
-
+    #
     main()

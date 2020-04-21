@@ -1,179 +1,182 @@
 {
-  "ITC": {
-    "undefined": {
-      "name": "undefined",
-      "LimitTemp": 1,
-      "failure": [
-        {
-          "dT": 0,
-          "code": "XX",
-          "cause": "undefined class",
-          "action": "undefined class"
-        }
-      ]
-    },
-    "Tf_1": {
-      "name": "부싱 상부",
-      "LimitTemp": 90,
-      "failure": [
-        {
-          "dT": 0,
-          "code": "AD",
-          "cause": "케이블 종단부(연결부) 풀림으로 인한 저항 증가",
-          "action": "케이블 연결부 조임"
+    "ITC": {
+        "undefined": {
+            "name": "undefined",
+            "LimitTemp": 1,
+            "failure": [{
+                "dT": 0,
+                "code": "XX",
+                "cause": "undefined class",
+                "action": "undefined class"
+            }]
         },
-        {
-          "dT": 5,
-          "code": "IN",
-          "cause": "케이블 종단부(연결부) 풀림으로 인한 저항 증가",
-          "action": "케이블 연결부 조임"
+        "Tf_1": {
+            "name": "부싱 상부",
+            "LimitTemp": 90,
+            "failure": [{
+                    "dT": 0,
+                    "code": "AD",
+                    "cause": "케이블 종단부(연결부) 풀림으로 인한 저항 증가",
+                    "action": "케이블 연결부 조임"
+                },
+                {
+                    "dT": 5,
+                    "code": "IN",
+                    "cause": "케이블 종단부(연결부) 풀림으로 인한 저항 증가",
+                    "action": "케이블 연결부 조임"
+                },
+                {
+                    "dT": 30,
+                    "code": "SE",
+                    "cause": "케이블 종단부(연결부) 풀림으로 인한 저항 증가",
+                    "action": "케이블 연결부 조임"
+                },
+                {
+                    "dT": 80,
+                    "code": "IM",
+                    "cause": "케이블 종단부(연결부) 풀림으로 인한 저항 증가",
+                    "action": "케이블 연결부 조임"
+                }
+            ]
         },
-        {
-          "dT": 30,
-          "code": "SE",
-          "cause": "케이블 종단부(연결부) 풀림으로 인한 저항 증가",
-          "action": "케이블 연결부 조임"
+        "Tf_2": {
+            "name": "피뢰기",
+            "LimitTemp": 40,
+            "failure": [{
+                "dT": 0,
+                "code": "IM",
+                "cause": "피뢰기 불량 및 저항 증가로 인한 누설전류 증가로 발열(열폭주)",
+                "action": "피뢰기 교체"
+            }]
         },
-        {
-          "dT": 80,
-          "code": "IM",
-          "cause": "케이블 종단부(연결부) 풀림으로 인한 저항 증가",
-          "action": "케이블 연결부 조임"
-        }
-      ]
-    },
-    "Tf_2": {
-      "name": "피뢰기",
-      "LimitTemp": 40,
-      "failure": [
-        {
-          "dT": 0,
-          "code": "IM",
-          "cause": "피뢰기 불량 및 저항 증가로 인한 누설전류 증가로 발열(열폭주)",
-          "action": "피뢰기 교체"
-        }
-      ]
-    },
-    "LC_1": {
-      "name": "로드센터 버스바",
-      "LimitTemp": 85,
-      "failure": [
-        {
-          "dT": 0,
-          "code": "AD",
-          "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
-          "action": "버스바 연결부 조임"
+        "LC_1": {
+            "name": "로드센터 버스바",
+            "LimitTemp": 85,
+            "failure": [{
+                    "dT": 0,
+                    "code": "AD",
+                    "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
+                    "action": "버스바 연결부 조임"
+                },
+                {
+                    "dT": 5,
+                    "code": "IN",
+                    "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
+                    "action": "버스바 연결부 조임"
+                },
+                {
+                    "dT": 30,
+                    "code": "SE",
+                    "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
+                    "action": "버스바 연결부 조임"
+                },
+                {
+                    "dT": 80,
+                    "code": "IM",
+                    "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
+                    "action": "버스바 연결부 조임"
+                }
+            ]
         },
-        {
-          "dT": 5,
-          "code": "IN",
-          "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
-          "action": "버스바 연결부 조임"
+        "LC_2": {
+            "name": "로드센터",
+            "LimitTemp": 65,
+            "failure": [{
+                    "dT": 0,
+                    "code": "AD",
+                    "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
+                    "action": "버스바 연결부 조임"
+                },
+                {
+                    "dT": 5,
+                    "code": "IN",
+                    "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
+                    "action": "버스바 연결부 조임"
+                },
+                {
+                    "dT": 30,
+                    "code": "SE",
+                    "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
+                    "action": "버스바 연결부 조임"
+                },
+                {
+                    "dT": 80,
+                    "code": "IM",
+                    "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
+                    "action": "버스바 연결부 조임"
+                }
+            ]
         },
-        {
-          "dT": 30,
-          "code": "SE",
-          "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
-          "action": "버스바 연결부 조임"
+        "Tf_3": {
+            "name": "접지",
+            "LimitTemp": 40,
+            "failure": [{
+                "dT": 0,
+                "code": "IM",
+                "cause": "변압기 절연유의 열화로 인한 누설 전류 발생",
+                "action": "변압기 절연유 교체"
+            }]
         },
-        {
-          "dT": 80,
-          "code": "IM",
-          "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
-          "action": "버스바 연결부 조임"
-        }
-      ]
-    },
-    "LC_2": {
-      "name": "로드센터",
-      "LimitTemp": 65,
-      "failure": [
-        {
-          "dT": 0,
-          "code": "AD",
-          "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
-          "action": "버스바 연결부 조임"
+        "Pump": {
+            "name": "펌프",
+            "LimitTemp": 250,
+            "failure": [{
+                "dT": 5,
+                "code": "IM",
+                "cause": "펌프 및 밸브의 오작동 및 고장",
+                "action": "펌프 및 밸브 수리 및 교체"
+            }],
+            "note": "펌프의 입구/출구의 온도차이 계산"
         },
-        {
-          "dT": 5,
-          "code": "IN",
-          "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
-          "action": "버스바 연결부 조임"
+        "Motor_1": {
+            "name": "권선",
+            "LimitTemp": 85,
+            "failure": [{
+                "dT": 0,
+                "code": "IM",
+                "cause": "권선 이상(단략, 단선), 절연 열화, 저항 손실, 유도 손실, 흡입구 막힘",
+                "action": "막힘 제거, 권선 수리 및 모터 교체"
+            }]
         },
-        {
-          "dT": 30,
-          "code": "SE",
-          "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
-          "action": "버스바 연결부 조임"
+        "Motor_2": {
+            "name": "베어링",
+            "LimitTemp": 125,
+            "failure": [{
+                "dT": 0,
+                "code": "IM",
+                "cause": "null",
+                "action": "null"
+            }]
         },
-        {
-          "dT": 80,
-          "code": "IM",
-          "cause": "부하의 불균형 및 연결부 풀림에 의한 국지적 발열",
-          "action": "버스바 연결부 조임"
+        "Motor": {
+            "name": "모터",
+            "LimitTemp": 125,
+            "failure": [{
+                "dT": 0,
+                "code": "",
+                "cause": "",
+                "action": ""
+            }]
+        },
+        "IPB": {
+            "name": "상분리모선",
+            "LimitTemp": 110,
+            "failure": [{
+                "dT": 0,
+                "code": "IM",
+                "cause": "null",
+                "action": "null"
+            }]
+        },
+        "TB": {
+            "name": "터미널 박스",
+            "LimitTemp": 15,
+            "failure": [{
+                "dT": 0,
+                "code": "IM",
+                "cause": "null",
+                "action": "null"
+            }]
         }
-      ]
-    },
-    "Tf_3": {
-      "name": "접지",
-      "LimitTemp": 40,
-      "failure": [
-        {
-          "dT": 0,
-          "code": "IM",
-          "cause": "변압기 절연유의 열화로 인한 누설 전류 발생",
-          "action": "변압기 절연유 교체"
-        }
-      ]
-    },
-    "Pump": {
-      "name": "펌프",
-      "LimitTemp": 250,
-      "failure": [
-        {
-          "dT": 5,
-          "code": "IM",
-          "cause": "펌프 및 밸브의 오작동 및 고장",
-          "action": "펌프 및 밸브 수리 및 교체"
-        }
-      ],
-      "note": "펌프의 입구/출구의 온도차이 계산"
-    },
-    "Motor_1": {
-      "name": "권선",
-      "LimitTemp": 85,
-      "failure": [
-        {
-          "dT": 0,
-          "code": "IM",
-          "cause": "권선 이상(단략, 단선), 절연 열화, 저항 손실, 유도 손실, 흡입구 막힘",
-          "action": "막힘 제거, 권선 수리 및 모터 교체"
-        }
-      ]
-    },
-    "Motor_2": {
-      "name": "베어링",
-      "LimitTemp": 125,
-      "failure": [
-        {
-          "dT": 0,
-          "code": "IM",
-          "cause": "베어링 손상(윤활 관련)",
-          "action": "윤활유 보충, 베어링 교체"
-        }
-      ]
-    },
-    "TB": {
-      "name": "터미널 박스",
-      "LimitTemp": 15,
-      "failure": [
-        {
-          "dT": 0,
-          "code": "IM",
-          "cause": "null",
-          "action": "null"
-        }
-      ]
     }
-  }
 }

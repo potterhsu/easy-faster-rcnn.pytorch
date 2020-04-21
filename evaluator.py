@@ -16,7 +16,7 @@ class Evaluator(object):
         self._path_to_data_dir = path_to_data_dir
         self._path_to_results_dir = path_to_results_dir
 
-    def evaluate(self, model: Model) -> Tuple[float, str]:
+    def evaluate(self, model: Model):# -> Tuple[float, str]:
         all_image_ids, all_detection_bboxes, all_detection_classes, all_detection_probs = [], [], [], []
 
         with torch.no_grad():

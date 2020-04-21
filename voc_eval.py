@@ -21,9 +21,9 @@ def parse_rec(filename):
         obj_struct['difficult'] = int(obj.find('difficult').text)
         bbox = obj.find('bndbox')
         obj_struct['bbox'] = [int(bbox.find('xmin').text),
-                              int(bbox.find('ymin').text),
-                              int(bbox.find('xmax').text),
-                              int(bbox.find('ymax').text)]
+                            int(bbox.find('ymin').text),
+                            int(bbox.find('xmax').text),
+                            int(bbox.find('ymax').text)]
         objects.append(obj_struct)
 
     return objects
@@ -62,12 +62,12 @@ def voc_ap(rec, prec, use_07_metric=False):
     return ap
 
 def voc_eval(detpath,
-             annopath,
-             imagesetfile,
-             classname,
-             cachedir,
-             ovthresh=0.5,
-             use_07_metric=False):
+                    annopath,
+                    imagesetfile,
+                    classname,
+                    cachedir,
+                    ovthresh=0.5,
+                    use_07_metric=False):
     """rec, prec, ap = voc_eval(detpath,
                                 annopath,
                                 imagesetfile,
@@ -127,8 +127,8 @@ def voc_eval(detpath,
         det = [False] * len(R)
         npos = npos + sum(~difficult)
         class_recs[imagename] = {'bbox': bbox,
-                                 'difficult': difficult,
-                                 'det': det}
+                                                'difficult': difficult,
+                                                'det': det}
 
     # read dets
     detfile = detpath.format(classname)
@@ -170,7 +170,7 @@ def voc_eval(detpath,
             # union
             uni = ((bb[2] - bb[0] + 1.) * (bb[3] - bb[1] + 1.) +
                    (BBGT[:, 2] - BBGT[:, 0] + 1.) *
-                   (BBGT[:, 3] - BBGT[:, 1] + 1.) - inters)
+                    (BBGT[:, 3] - BBGT[:, 1] + 1.) - inters)
 
             overlaps = inters / uni
             ovmax = np.max(overlaps)
@@ -194,5 +194,4 @@ def voc_eval(detpath,
     # ground truth
     prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
     ap = voc_ap(rec, prec, use_07_metric)
-
     return rec, prec, ap

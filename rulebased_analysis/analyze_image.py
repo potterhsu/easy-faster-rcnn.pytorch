@@ -8,6 +8,7 @@ import math
 import copy
 import numpy as np
 import cv2
+import xmltodict
 import json
 import glob
 from collections import OrderedDict
@@ -468,7 +469,12 @@ def analyze(xml, csv, out_dir):
     fname = os.path.basename(os.path.splitext(xml)[0])
     analyze = parse_xml.parcingXml(xml)
     analyze = np.array(analyze)
-    csv_arr = parse_xml.parcingCsv(csv)
+    if csv.endswith('csv'):
+        csv_arr = parse_xml.parcingCsv(csv)
+    elif csv.endswith('json'):
+        with open(csv_path) as f:
+            data = json.load(f)   
+            csv_arr = np.array(json.loads(data['tempData']))
     file_data = OrderedDict()
     file_data["facilities"] = []
 
@@ -532,6 +538,7 @@ def analyze(xml, csv, out_dir):
         masking_img = masking_img.astype(np.uint8)
         rp_contour, heirachy = cv2.findContours(masking_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         
+        
         # object_data = writeJason(xmin, ymin, xmax, ymax, temp_min, temp_max, temp_average, object_class, hp_contour, rp_contour)
         json_data = {}
         json_data["xmin"] = xmin
@@ -545,6 +552,11 @@ def analyze(xml, csv, out_dir):
         json_data["hp_counter"] = hp_contour
         json_data["rp_counter"] = rp_contour
         json_data["tp_counter"] = tp_contour
+        json_data["FileName"] = csv.split(os.sep)[-1]
+        rule = DiagnosisRule("./data/diagnosis_rule.json")
+        rule_dict = rule.diagnose(object_class, temp_average)
+        json_data['FacilityName'] = rule_dict['name']
+        json_data["Limit Temperature"] = rule_dict["Limit Temperature"]
         file_data["facilities"].append(writeJson2(json_data))
 
         # file_data["facilities"].append(object_data)
@@ -640,7 +652,7 @@ class DiagnosisRule():
         if f_class not in self.rule_data[rule].keys():
             f_class_original = f_class
             f_class = "undefined"
-
+        
         name = self.rule_data[rule][f_class]["name"]
         LimitTemp = self.rule_data[rule][f_class]["LimitTemp"]
         
@@ -659,14 +671,18 @@ class DiagnosisRule():
 
 if __name__=="__main__":
     #example
-    data = os.path.join('../data', 'VOCdevkit','20_FirsQuarter_readymade_data')
-    xml_folder_path =  os.path.join(data,'Annotations')
+    data = os.path.join('D:\\2020연구\\1) 한수원\\2분기\\20.04 우선구현 파일(이노팩토리)\\회전설비')
+    xml_folder_path =  os.path.join(data,'annotations')
+    csv_folder_path = os.path.join(data,'json')
+    
     xml_folder = os.listdir(xml_folder_path)
-    csv_folder_path = os.path.join(data,'JPEGImages')
     csv_folder = os.listdir(csv_folder_path)
-    out_dir = "output"
+    
+    
+    out_dir = os.path.join("D:\\2020연구\\1) 한수원\\2분기\\20.04 우선구현 파일(이노팩토리)\\회전설비", "results")
     for xml, csv in list(zip(xml_folder, csv_folder)):
         xml_path = os.path.join(xml_folder_path, xml)
         csv_path = os.path.join(csv_folder_path, csv)
         print(xml_path, csv_path)
+
         analyze(xml_path, csv_path, out_dir)
