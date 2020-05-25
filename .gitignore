@@ -7,4 +7,6 @@ caches
 support.egg-info
 pycocotools
 
+support/*.pyd
+
 *.so
