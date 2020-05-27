@@ -48,13 +48,14 @@ def get_data(input_path, train_r=0.9,test_r=0.1, val_r=0.0):
     classes_count = {}
     class_mapping = {}
 
-    path_list = [path_list for path_list in glob.iglob(input_path+'/**')
+    path_list = [path_list for path_list in glob.iglob(input_path+'/*')
                             if os.path.isdir(path_list)]
     
     # KHNP Data
     data_paths = path_list
     data_paths.sort(key=natural_keys)
     print('Parsing annotation files')
+    print(path_list)
     
     data_split = {}
     for data_path in data_paths:
@@ -63,10 +64,12 @@ def get_data(input_path, train_r=0.9,test_r=0.1, val_r=0.0):
         csv_path = os.path.join(data_path, 'csv')
         
         
-        imgsets_path = [filename for filename in glob.iglob(imgs_path+'/**/*', recursive=True)
+        imgsets_path = [filename for filename in glob.iglob(imgs_path+'/*')
                                 if filename.lower().endswith(('.jpg', '.png'))]
-        annots_path = [filename for filename in glob.iglob(annot_path+'/**/*.xml', recursive=True)]
-        csv_path = [filename for filename in glob.iglob(csv_path+'/**/*.csv', recursive=True)]
+        
+        annots_path = [filename for filename in glob.iglob(annot_path+'/*.xml', recursive=True)]
+        
+        csv_path = [filename for filename in glob.iglob(csv_path+'/*.csv', recursive=True)]
         
         imgsets_path.sort(key=natural_keys)
         annots_path.sort(key=natural_keys)
@@ -96,7 +99,7 @@ def get_data(input_path, train_r=0.9,test_r=0.1, val_r=0.0):
         trainval_files_xml=[]
         
         dataset_len = [i for i in range(len(annots_path))]
-            
+
         train_split_idx = int(len(dataset_len)*train_r)
         test_split_idx = int(len(dataset_len)*(train_r+test_r))
         
@@ -166,11 +169,12 @@ def get_data(input_path, train_r=0.9,test_r=0.1, val_r=0.0):
             for element_obj in element_objs:
                 class_name = element_obj.find('name').text
                 # If class Name Modify & save Please un-comment this two line
-                '''
-                if class_name =='Motor_1':
-                    class_name = 'Motor'
-                    element_obj.find('name').text = 'Motor'
+                
+                if class_name =='CD':
+                    class_name = 'CB'
+                    element_obj.find('name').text = 'CB'
                     et.write(annot, encoding='utf-8')
+                '''
                 elif class_name =='Motor_2':
                     class_name = 'Motor'
                     element_obj.find('name').text = 'Motor'
@@ -190,9 +194,9 @@ def get_data(input_path, train_r=0.9,test_r=0.1, val_r=0.0):
                 y1 = int(round(float(obj_bbox.find('ymin').text)))
                 x2 = int(round(float(obj_bbox.find('xmax').text)))
                 y2 = int(round(float(obj_bbox.find('ymax').text)))
-                difficulty = int(element_obj.find('difficult').text) == 1
-                annotation_data['bboxes'].append(
-                    {'class': class_name, 'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'difficult': difficulty})
+                #difficulty = int(element_obj.find('difficult').text) == 1
+                #annotation_data['bboxes'].append({'class': class_name, 'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'difficult': difficulty})
+                annotation_data['bboxes'].append({'class': class_name, 'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2})
             all_imgs.append(annotation_data)
             
     return all_imgs, classes_count, class_mapping
@@ -217,10 +221,31 @@ def save_txt(img_list, save_loc, use_for='train'):
                 used_set.add(text)
                 with open(use_path, 'a') as f:
                     f.writelines(text)
-    
+
+def merge(*dict_args):
+    result = {}
+    for dictionary in dict_args:
+        result.update(dictionary)
+    return result
 if __name__ == '__main__':
+    
     #PASCAL VOC TRAIN TEST GENERATOR
-    all_imgs, cc, cm = get_data(input_path = "../data/VOCdevkit/20_FirsQuarter_readymade_data/", train_r=0, test_r=0, val_r=1)
+    subfoler = ['KHNP_20_1', 'KHNP_20_2']
+    all_imgs_list = []
+    for i in subfoler:
+        paths = os.path.join("D:\\KHNP\\Gisung\\", i)
+        subpath = os.listdir(paths)
+        for j in subpath:
+            all_imgs, cc, cm = get_data(input_path =os.path.join(paths, j), train_r=0, test_r=0, val_r=1)
+            all_imgs_list.extend(all_imgs)
+            # all_imgs = merge(all_imgs)
+    
+    save_txt(all_imgs_list, save_loc='../data/VOCdevkit/KHNP/ImageSets/Main', use_for='val')
+    
+    """
+    #파일 개수현황보는거
+    all_imgs, cc, cm = get_data(input_path = "D:\\KHNP\\Gisung\\KHNP_20_2\\wulsung2", train_r=1, test_r=0, val_r=0)
+    print(all_imgs)
     train_imgs = [s for s in all_imgs if s['imageset'] == 'train']
     test_imgs = [s for s in all_imgs if s['imageset'] == 'test']
     val_imgs = [s for s in all_imgs if s['imageset'] == 'val']
@@ -231,8 +256,4 @@ if __name__ == '__main__':
     print('Train Number:{}'.format(len(train_imgs)))
     print('Test Number:{}'.format(len(test_imgs)))
     print('Val Number:{}'.format(len(val_imgs)))
-    
-    # save_txt(all_imgs, save_loc='../data/VOCdevkit/20_FirsQuarter_readymade_data/ImageSets/Main', use_for='val')
-    # save_txt(all_imgs, save_loc='../data/VOCdevkit/20_FirsQuarter_readymade_data/ImageSets/Main', use_for='train')
-    # save_txt(all_imgs, save_loc='../data/VOCdevkit/20_FirsQuarter_readymade_data/ImageSets/Main', use_for='test')
-        
+    """

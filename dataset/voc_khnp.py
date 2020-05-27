@@ -45,7 +45,10 @@ class VOCKHNP(Base):
         'CB': 8, 
         'E': 9, 
         'FUSE': 10, 
-        'TRDR': 11
+        'TRDR': 11,
+        'BUSHING':12,
+        'LT_ARRESTER':13,
+        'INSULATOR':14
     }
     
     LABEL_TO_CATEGORY_DICT = {v: k for k, v in CATEGORY_TO_LABEL_DICT.items()}
@@ -53,7 +56,7 @@ class VOCKHNP(Base):
     def __init__(self, path_to_data_dir: str, mode: Base.Mode, image_min_side: float, image_max_side: float):
         super().__init__(path_to_data_dir, mode, image_min_side, image_max_side)
 
-        path_to_vockhmp_dir = os.path.join(self._path_to_data_dir, 'VOCdevkit', '20_FirsQuarter_readymade_data')
+        path_to_vockhmp_dir = os.path.join(self._path_to_data_dir, 'VOCdevkit', 'KHNP')
         path_to_imagesets_main_dir = os.path.join(path_to_vockhmp_dir, 'ImageSets', 'Main')
         path_to_annotations_dir = os.path.join(path_to_vockhmp_dir, 'Annotations')
         self._path_to_jpeg_images_dir = os.path.join(path_to_vockhmp_dir, 'JPEGImages')
@@ -136,7 +139,7 @@ class VOCKHNP(Base):
 
         self._write_results(path_to_results_dir, image_ids, bboxes, classes, probs)
 
-        path_to_vockhmp_dir = os.path.join(self._path_to_data_dir, 'VOCdevkit', '20_FirsQuarter_readymade_data')
+        path_to_vockhmp_dir = os.path.join(self._path_to_data_dir, 'VOCdevkit', 'KHNP')
         path_to_main_dir = os.path.join(path_to_vockhmp_dir, 'ImageSets', 'Main')
         path_to_annotations_dir = os.path.join(path_to_vockhmp_dir, 'Annotations')
         
@@ -144,18 +147,18 @@ class VOCKHNP(Base):
         class_to_ap_dict = {}
         for c in range(1, VOCKHNP.num_classes()):
             category = VOCKHNP.LABEL_TO_CATEGORY_DICT[c]
-            try:
-                path_to_cache_dir = os.path.join('caches', 'voc2007')
-                os.makedirs(path_to_cache_dir, exist_ok=True)
-                _, _, ap = voc_eval(detpath=os.path.join(path_to_results_dir, 'comp3_det_test_{:s}.txt'.format(category)),
-                                    annopath=path_to_annotations_dir,
-                                    imagesetfile=os.path.join(path_to_main_dir, 'test.txt'),
-                                    classname=category,
-                                    cachedir=path_to_cache_dir,
-                                    ovthresh=0.5,
-                                    use_07_metric=True)
-            except IndexError:
-                ap = 0
+            # try:
+            path_to_cache_dir = os.path.join('caches', 'voc2007')
+            os.makedirs(path_to_cache_dir, exist_ok=True)
+            _, _, ap = voc_eval(detpath=os.path.join(path_to_results_dir, 'comp3_det_test_{:s}.txt'.format(category)),
+                                annopath=path_to_annotations_dir,
+                                imagesetfile=os.path.join(path_to_main_dir, 'test.txt'),
+                                classname=category,
+                                cachedir=path_to_cache_dir,
+                                ovthresh=0.5,
+                                use_07_metric=True)
+            # except IndexError:
+            #     ap = 0
 
             class_to_ap_dict[c] = ap
                     
@@ -190,4 +193,4 @@ class VOCKHNP(Base):
 
     @staticmethod
     def num_classes():# -> int:
-        return 12
+        return 15
