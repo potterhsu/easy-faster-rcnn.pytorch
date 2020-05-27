@@ -105,7 +105,7 @@ class RegionProposalNetwork(nn.Module):
 
         for batch_index in range(batch_size):
             selected_indices = (batch_indices == batch_index).nonzero().view(-1)
-
+            #This part
             cross_entropy = F.cross_entropy(input=anchor_objectnesses[selected_indices],
                                             target=gt_anchor_objectnesses[selected_indices])
 

@@ -179,7 +179,7 @@ class Model(nn.Module):
 
             for batch_index in range(batch_size):
                 selected_indices = (batch_indices == batch_index).nonzero().view(-1)
-
+                #This part
                 cross_entropy = F.cross_entropy(input=proposal_classes[selected_indices],
                                                 target=gt_proposal_classes[selected_indices])
 
