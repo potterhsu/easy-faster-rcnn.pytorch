@@ -114,6 +114,7 @@ def voc_eval(detpath,
             cPickle.dump(recs, f)
     else:
         # load
+        print("Annot cache file exits... Load {:}".format(cachefile))
         with open(cachefile, 'rb') as f:
             recs = cPickle.load(f)
 
@@ -123,7 +124,12 @@ def voc_eval(detpath,
     for imagename in imagenames:
         R = [obj for obj in recs[imagename] if obj['name'] == classname]
         bbox = np.array([x['bbox'] for x in R])
-        difficult = np.array([x['difficult'] for x in R]).astype(np.bool)
+        try:
+            difficult = np.array([x['difficult'] for x in R]).astype(np.bool)
+        except:
+            difficult = np.array([0 for i in R]).astype(np.bool)
+            for idx, x in enumerate(R):
+                R[idx]['difficult'] = 0
         det = [False] * len(R)
         npos = npos + sum(~difficult)
         class_recs[imagename] = {'bbox': bbox,
