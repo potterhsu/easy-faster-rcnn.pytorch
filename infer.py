@@ -12,6 +12,10 @@ from model import Model
 from roi.pooler import Pooler
 from config.eval_config import EvalConfig as Config
 
+import numpy as np
+import cv2
+from dataset.pallete_aug import heatMapConvert
+from PIL import Image
 
 def _infer(path_to_input_image: str, path_to_output_image: str, path_to_checkpoint: str, dataset_name: str, backbone_name: str, prob_thresh: float):
     dataset_class = DatasetBase.from_name(dataset_name)
@@ -25,7 +29,13 @@ def _infer(path_to_input_image: str, path_to_output_image: str, path_to_checkpoi
     model.load(path_to_checkpoint)
 
     with torch.no_grad():
-        image = transforms.Image.open(path_to_input_image)
+        #image = transforms.Image.open(path_to_input_image)
+        image = np.loadtxt(path_to_input_image,delimiter=',')
+        image = cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+        image = cv2.applyColorMap(image, cv2.COLORMAP_INFERNO)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = Image.fromarray(image)
+        
         image_tensor, scale = dataset_class.preprocess(image, Config.IMAGE_MIN_SIDE, Config.IMAGE_MAX_SIDE)
 
         detection_bboxes, detection_classes, detection_probs, _ = \
@@ -65,10 +75,12 @@ if __name__ == '__main__':
         parser.add_argument('--pooler_mode', type=str, choices=Pooler.OPTIONS, help='default: {.value:s}'.format(Config.POOLER_MODE))
         parser.add_argument('--rpn_pre_nms_top_n', type=int, help='default: {:d}'.format(Config.RPN_PRE_NMS_TOP_N))
         parser.add_argument('--rpn_post_nms_top_n', type=int, help='default: {:d}'.format(Config.RPN_POST_NMS_TOP_N))
-        parser.add_argument('input', type=str, help='path to input image')
-        parser.add_argument('output', type=str, help='path to output result image')
+        parser.add_argument('--input', type=str, help='path to input image')
+        parser.add_argument('--output', type=str, help='path to output result image')
         args = parser.parse_args()
-
+        #python infer.py -s=cocokhnp -b=resnet101 -c ./outputs/checkpoints-20200607172521-cocokhnp-resnet101-94dd4e88/model-90000.pth --input "E:\\COCO2\\test2017\\000000000000.csv" --output test.jpg
+        #python infer.py -s=cocokhnp -b=resnet101 -c./outputs/checkpoints-20200610024751-cocokhnp-resnet101-4e3164a5/model-90000.pth --input "E:\\COCO2\\test2017\\000000000000.csv" --output test.jpg
+        #
         path_to_input_image = args.input
         path_to_output_image = args.output
         dataset_name = args.dataset

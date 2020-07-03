@@ -19,13 +19,16 @@ class Base(torch.utils.data.dataset.Dataset):
 
     OPTIONS = ['voc2007', 'coco2017', 'voc2007-cat-dog', \
                 'coco2017-person', 'coco2017-car', 'coco2017-animal',\
-                'khnp']
+                'khnp', 'cocokhnp', 'pothole']
 
     @staticmethod
     def from_name(name: str): #-> Type['Base']:
         if name == 'voc2007':
             from dataset.voc2007 import VOC2007
             return VOC2007
+        elif name == 'cocokhnp':
+            from dataset.coco2017_khnp import COCO2017KHNP
+            return COCO2017KHNP
         elif name == 'coco2017':
             from dataset.coco2017 import COCO2017
             return COCO2017
@@ -44,6 +47,9 @@ class Base(torch.utils.data.dataset.Dataset):
         elif name == 'khnp':
             from dataset.voc_khnp import VOCKHNP
             return VOCKHNP
+        elif name == 'pothole':
+            from dataset.voc2007_pothole import VOC2007
+            return VOC2007
         else:
             raise ValueError
 

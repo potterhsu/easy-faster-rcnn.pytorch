@@ -231,12 +231,13 @@ if __name__ == '__main__':
     
     #PASCAL VOC TRAIN TEST GENERATOR
     subfoler = ['KHNP_20_1', 'KHNP_20_2']
+    #subfoler = ['poc']
     all_imgs_list = []
     for i in subfoler:
         paths = os.path.join("D:\\KHNP\\Gisung\\", i)
         subpath = os.listdir(paths)
         for j in subpath:
-            all_imgs, cc, cm = get_data(input_path =os.path.join(paths, j), train_r=0, test_r=0, val_r=1)
+            all_imgs, cc, cm = get_data(input_path =os.path.join(paths, j), train_r=0, test_r=1, val_r=0)
             all_imgs_list.extend(all_imgs)
             # all_imgs = merge(all_imgs)
     

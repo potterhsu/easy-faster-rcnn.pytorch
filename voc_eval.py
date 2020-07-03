@@ -16,9 +16,10 @@ def parse_rec(filename):
     for obj in tree.findall('object'):
         obj_struct = {}
         obj_struct['name'] = obj.find('name').text
-        obj_struct['pose'] = obj.find('pose').text
-        obj_struct['truncated'] = int(obj.find('truncated').text)
-        obj_struct['difficult'] = int(obj.find('difficult').text)
+        #obj_struct['pose'] = obj.find('pose').text
+        #obj_struct['truncated'] = int(obj.find('truncated').text)
+        #obj_struct['difficult'] = int(obj.find('difficult').text)
+        obj_struct['difficult'] = 0
         bbox = obj.find('bndbox')
         obj_struct['bbox'] = [int(bbox.find('xmin').text),
                             int(bbox.find('ymin').text),
@@ -105,6 +106,7 @@ def voc_eval(detpath,
         recs = {}
         for i, imagename in enumerate(imagenames):
             recs[imagename] = parse_rec(os.path.join(annopath,'{}.xml'.format(imagename)))
+            #recs[imagename] = parse_rec(os.path.join("E:\\pothole\\VOCdevkit\\Annotations", annopath.format(imagename)))
             if i % 100 == 0:
                 print('Reading annotation for {:d}/{:d}'.format(
                     i + 1, len(imagenames)))
@@ -145,13 +147,14 @@ def voc_eval(detpath,
     image_ids = [x[0] for x in splitlines]
     confidence = np.array([float(x[1]) for x in splitlines])
     BB = np.array([[float(z) for z in x[2:]] for x in splitlines])
-
+    if len(BB)==0:
+        return 0, 0, 0.0
     # sort by confidence
     sorted_ind = np.argsort(-confidence)
     sorted_scores = np.sort(-confidence)
     BB = BB[sorted_ind, :]
     image_ids = [image_ids[x] for x in sorted_ind]
-
+    
     # go down dets and mark TPs and FPs
     nd = len(image_ids)
     tp = np.zeros(nd)
@@ -200,4 +203,6 @@ def voc_eval(detpath,
     # ground truth
     prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
     ap = voc_ap(rec, prec, use_07_metric)
+    print("recall:{}".format(np.mean(rec)))
+    print("Precision:{}".format(np.mean(prec)))
     return rec, prec, ap

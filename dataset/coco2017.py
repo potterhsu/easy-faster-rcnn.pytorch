@@ -131,10 +131,10 @@ class COCO2017(Base):
             with open(path_to_image_ratios_pickle, 'wb') as f:
                 pickle.dump(self.image_ratios, f)
 
-    def __len__(self) -> int:
+    def __len__(self):# -> int:
         return len(self._image_id_to_annotation_dict)
 
-    def __getitem__(self, index: int) -> Tuple[str, Tensor, Tensor, Tensor, Tensor]:
+    def __getitem__(self, index: int):# -> Tuple[str, Tensor, Tensor, Tensor, Tensor]:
         image_id = self._image_ids[index]
         annotation = self._image_id_to_annotation_dict[image_id]
 
@@ -157,7 +157,7 @@ class COCO2017(Base):
 
         return image_id, image, scale, bboxes, labels
 
-    def evaluate(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], classes: List[int], probs: List[float]) -> Tuple[float, str]:
+    def evaluate(self, path_to_results_dir: str, image_ids: List[str], bboxes: List[List[float]], classes: List[int], probs: List[float]):# -> Tuple[float, str]:
         self._write_results(path_to_results_dir, image_ids, bboxes, classes, probs)
 
         annType = 'bbox'
@@ -204,9 +204,9 @@ class COCO2017(Base):
             json.dump(results, f)
 
     @property
-    def image_ratios(self) -> List[float]:
+    def image_ratios(self):# -> List[float]:
         return self._image_ratios
 
     @staticmethod
-    def num_classes() -> int:
+    def num_classes():# -> int:
         return 92

@@ -88,8 +88,8 @@ if __name__ == '__main__':
         prob_thresh = args.probability_threshold
 
         Config.setup(image_min_side=args.image_min_side, image_max_side=args.image_max_side,
-                     anchor_ratios=args.anchor_ratios, anchor_sizes=args.anchor_sizes, pooler_mode=args.pooler_mode,
-                     rpn_pre_nms_top_n=args.rpn_pre_nms_top_n, rpn_post_nms_top_n=args.rpn_post_nms_top_n)
+                        anchor_ratios=args.anchor_ratios, anchor_sizes=args.anchor_sizes, pooler_mode=args.pooler_mode,
+                        rpn_pre_nms_top_n=args.rpn_pre_nms_top_n, rpn_post_nms_top_n=args.rpn_post_nms_top_n)
 
         print('Arguments:')
         for k, v in vars(args).items():

@@ -13,7 +13,7 @@ from bbox import BBox
 from dataset.base import Base
 from voc_eval import voc_eval
 
-from dataset.pallete_aug import heatMapConvert
+from dataset.pallete_aug import heatMapConvert, removeOutliers
 class VOCKHNP(Base):
 
     class Annotation(object):
@@ -117,7 +117,11 @@ class VOCKHNP(Base):
         image = np.loadtxt(os.path.join(self._path_to_jpeg_images_dir, annotation.filename),delimiter=',')
         image = cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
         # image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-        image = heatMapConvert(image, specific_cm='inferno', tool='cv')
+        image = removeOutliers(image, outlierConstant=10)
+        image = heatMapConvert(image, bboxes=None,
+                                        specific_cm=None, #'flirpal'
+                                        tool='custom', 
+                                        is_random=True)
         image = Image.fromarray(image)
         #여기에 파레트 들어가면 될듯.
         # random flip on only training mode

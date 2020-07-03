@@ -4,14 +4,14 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import cv2
 import os
-from colorspacious import cspace_converter
+# from colorspacious import cspace_converter
 from collections import OrderedDict
 import copy
 import time
 import random
 from matplotlib.colors import ListedColormap
 import pandas as pd
-plt.rcParams.update({'figure.max_open_warning': 0})
+
 
 '''
     Pallete Adding Algorithm.
@@ -41,10 +41,10 @@ plt.rcParams.update({'figure.max_open_warning': 0})
                             should be used to represent information which does not have ordering or relationships.
 '''
 
-def get_cmap(cmap_name='flirpal', percentile=0.0):
+def get_cmap(cmap_name='flirpal', percentile=25):
     
     try:
-        path = os.path.join(os.getcwd(),'dataset', 'pallete', cmap_name+'.csv')
+        path = os.path.join(os.getcwd(), 'pallete', cmap_name+'.csv')
     except:
         print(f"There is no {cmap_name} Color map as follow..")
     cmap = pd.read_csv(path).to_numpy()/255
@@ -52,19 +52,13 @@ def get_cmap(cmap_name='flirpal', percentile=0.0):
     
     mid_idx = int(length*0.5)
     
-    if not (percentile==0.0 or percentile==1.0):
-        if percentile < 0.5:
-            left_cmap = cv2.resize(cmap[:mid_idx,:], (h, int(mid_idx*percentile)))
-            # print(left_cmap.shape)
-            right_cmap = cv2.resize(cmap[mid_idx:,:], (h, mid_idx+int(mid_idx*(1-percentile))))
-            # print(right_cmap.shape)
-            cmap = np.vstack([left_cmap, right_cmap])
-        elif percentile > 0.5:
-            left_cmap = cv2.resize(cmap[:mid_idx,:], (h, mid_idx+int(mid_idx*percentile)))
-            # print(left_cmap.shape)
-            right_cmap = cv2.resize(cmap[mid_idx:,:], (h, int(mid_idx*(1-percentile))))
-            # print(right_cmap.shape)
-            cmap = np.vstack([left_cmap, right_cmap])
+    # exit()
+    left_cmap = cv2.resize(cmap[:mid_idx,:], (h, int(mid_idx*(percentile/100))))
+    # print(left_cmap.shape)
+    right_cmap = cv2.resize(cmap[mid_idx:,:], (h, mid_idx+int(mid_idx*(percentile/100))))
+    # print(right_cmap.shape)
+    
+    cmap = np.vstack([left_cmap, right_cmap])
     
     
     # print(cmap.shape)
@@ -80,6 +74,9 @@ def funcname(parameter_list):
 
 def normalize_thermal(data):
     # normalizedImg = np.zeros((480, 640))
+    if type(data)==list:
+        data = np.array(data)
+    
     normalizedImg = cv2.normalize(data, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
     return normalizedImg
 
@@ -93,29 +90,14 @@ def figure_to_array(fig):
     data = cv2.cvtColor(data, cv2.COLOR_BGRA2RGB)
     return data
 
-def removeOutliers(x, outlierConstant=10):
-    
-    a = copy.deepcopy(x)
-    #a = np.abs(stats.zscore(a))
-    upper_quartile = np.percentile(a, 75)
-    lower_quartile = np.percentile(a, 25)
-    IQR = (upper_quartile - lower_quartile) * outlierConstant
-    quartileSet = (lower_quartile - IQR, upper_quartile + IQR)
-    #print(quartileSet)
-    
-    t = np.where((a >= quartileSet[0]), a, quartileSet[0])
-    
-    result = np.where((t <= quartileSet[1]), t, quartileSet[1])
-    
-
-    return result
-
-def open_path_array(csv_path, csv=True):
+def open_path_array(path, csv=True):
+    csv_path = path#['csvpath']
     # Checking if the file exist
     if not os.path.isfile(csv_path):
         print("File {} does not exist!".format(csv_path))
         raise EOFError
         # Reading image as numpy matrix in gray scale (image, color_param)
+
     if csv_path.lower().endswith(('.csv')):
         data = np.loadtxt(csv_path, delimiter=',')
     elif csv_path.lower().endswith(('.json')):
@@ -123,6 +105,7 @@ def open_path_array(csv_path, csv=True):
         with open(csv_path, 'r') as f:
             json_data = json.load(f)
         data = json_data['tempData']
+            
     return data
 
 def heatMapConvert(data, bboxes=None,specific_cm=None, tool='cv', is_random=False):
@@ -155,9 +138,7 @@ def heatMapConvert(data, bboxes=None,specific_cm=None, tool='cv', is_random=Fals
                 random.seed(time.time())
 
                 specific_cm = random.choice(list(met_dict.values()))
-                data = cv2.applyColorMap(data, specific_cm)
-            else:
-                data = cv2.applyColorMap(data, met_dict[specific_cm])
+            data = cv2.applyColorMap(data, specific_cm)
             
             if bboxes is not None:
                 for box in bboxes:
@@ -231,11 +212,16 @@ def heatMapConvert(data, bboxes=None,specific_cm=None, tool='cv', is_random=Fals
                 
                 #plt clear
                 plt.clf()
+        # except:
+
+        #     raise ValueError('Colormap is not recognized.\n You can Possible value are: {} only matplotlib{} methods.'
+        #                                 .format(colormap,mpl.__version__))
     elif tool=='custom':
         methods = ['flirpal', 'glowbowpal', 'grey10pal', 'grey120pal', 
             'greyredpal', 'hotironpal', 'ironbowpal', 'medicalpal', 'midgreenpal',
             'midgreypal', 'mikronprismpal', 'rainbow1234pal',
             'rainbowpal', 'yellow']
+
         img = plt.figure()
         plt.axis("off")
         plt.tight_layout()
@@ -252,15 +238,15 @@ def heatMapConvert(data, bboxes=None,specific_cm=None, tool='cv', is_random=Fals
         data[data>high] = high
         low = np.percentile(data, 0)
         data[data<low] = low
-        psm = plt.pcolormesh(data, cmap=specific_cm,  vmin=data.min(), vmax=data.max())
-        # psm = plt.pcolormesh(data, cmap=specific_cm,  vmin=3, vmax=3)
+        # psm = plt.pcolormesh(_data, cmap=specific_cm,  vmin=22.9, vmax=45.5)
         plt.pcolormesh(data, cmap=specific_cm)
-        plt.colorbar(psm)
+        # plt.colorbar(psm)
         ###
         plt.imshow(data, cmap=  specific_cm)
         # plt.show()
         data = figure_to_array(img) 
         plt.clf()
+
         
         if bboxes is not None:
             for box in bboxes:
@@ -286,9 +272,174 @@ def heatMapConvert(data, bboxes=None,specific_cm=None, tool='cv', is_random=Fals
                 
                 #plt clear
                 plt.clf()
-
     return data
+def heatMapAllImageSave(data, bboxes=None,specific_cm=None, tool='matplot', fname=None):
+    #Deep Copy Original Thermal Data
+    ori_data = copy.deepcopy(data)
 
+    if tool == 'cv':
+        #Coloring Methods Structure in Opencv 4.1.x
+        colormap=OrderedDict()
+        colormap['Perceptually Uniform Sequential']=[('magma', cv2.COLORMAP_MAGMA),('plasma', cv2.COLORMAP_PLASMA),
+                                                                                    ('inferno', cv2.COLORMAP_INFERNO),('viridis', cv2.COLORMAP_VIRIDIS),
+                                                                                    ('cividis', cv2.COLORMAP_CIVIDIS)]
+        colormap['Sequential'] = [('autumn',  cv2.COLORMAP_AUTUMN), ('summer', cv2.COLORMAP_SUMMER),
+                                                    ('winter', cv2.COLORMAP_WINTER),('parula', cv2.COLORMAP_PARULA),
+                                                    ('turbo', cv2.COLORMAP_TURBO)]
+        colormap['Miscellaneous'] = [('bone',cv2.COLORMAP_BONE),('rainbow', cv2.COLORMAP_RAINBOW),
+                                                        ('jet',cv2.COLORMAP_JET), ('ocean', cv2.COLORMAP_OCEAN),
+                                                        ('spring', cv2.COLORMAP_SPRING), ('cool',cv2.COLORMAP_COOL),
+                                                        ('pink',cv2.COLORMAP_PINK),('hot',cv2.COLORMAP_HOT)]
+        colormap['Cyclic']=[('hsv', cv2.COLORMAP_HSV),('twilight', cv2.COLORMAP_TWILIGHT),('twilight_shifted', cv2.COLORMAP_TWILIGHT_SHIFTED)]
+        #Hole Methods
+        methods = colormap['Perceptually Uniform Sequential'] + colormap['Sequential'] +\
+                    colormap['Miscellaneous'] + colormap['Cyclic']
+        #Randomized Methos 
+        met_dict = dict(methods)
+
+        try:
+            #If the Random Method and Specific Color map is none.
+            if specific_cm is None:
+                random.seed(time.time())
+
+                specific_cm = random.choice(list(met_dict.values()))
+            data = cv2.applyColorMap(data, specific_cm)
+            
+            if bboxes is not None:
+                for box in bboxes:
+                    xmin = box['x1']
+                    ymin = box['y1']
+                    xmax = box['x2']
+                    ymax = box['y2']
+                    bndbox_data = normalize_thermal(ori_data[ymin:ymax, xmin:xmax])
+                    
+                    data[ymin:ymax, xmin:xmax] = cv2.applyColorMap(bndbox_data, specific_cm)
+            
+        except:
+            raise ValueError('Colormap is not recognized.\n You can Possible value are: {} only Open_cv{} methods.'
+                                        .format(colormap,cv2.__version__))
+    elif tool =='matplot':
+        colormap=OrderedDict()
+        colormap['Perceptually Uniform Sequential']=[ 'viridis', 'plasma', 'inferno', 'magma', 'cividis']
+        colormap['Sequential'] = ['Greys', 'Purples', 'Blues', 'Greens', 'Oranges', 'Reds',
+                                                    'YlOrBr', 'YlOrRd', 'OrRd', 'PuRd', 'RdPu', 'BuPu',
+                                                    'GnBu', 'PuBu', 'YlGnBu', 'PuBuGn', 'BuGn', 'YlGn']
+        colormap['Sequential (2)'] = ['binary', 'gist_yarg', 'gist_gray', 'gray', 'bone', 'pink',
+                                                    'spring', 'summer', 'autumn', 'winter', 'cool', 'Wistia',
+                                                    'hot', 'afmhot', 'gist_heat', 'copper']
+        colormap['Diverging'] = ['PiYG', 'PRGn', 'BrBG', 'PuOr', 'RdGy', 'RdBu',
+                                            'RdYlBu', 'RdYlGn', 'Spectral', 'coolwarm', 'bwr', 'seismic']
+        colormap['Qualitative'] = ['Pastel1', 'Pastel2', 'Paired', 'Accent',
+                                                'Dark2', 'Set1', 'Set2', 'Set3',
+                                                'tab10', 'tab20', 'tab20b', 'tab20c']
+        colormap['Miscellaneous'] = ['flag', 'prism', 'ocean', 'gist_earth', 'terrain', 'gist_stern',
+                                                    'gnuplot', 'gnuplot2', 'CMRmap', 'cubehelix', 'brg',
+                                                    'gist_rainbow', 'rainbow', 'jet', 'nipy_spectral', 'gist_ncar']
+        colormap['Cyclic']=['hsv','twilight','twilight_shifted']
+        methods = colormap['Perceptually Uniform Sequential']+colormap['Sequential']+colormap['Sequential (2)']+\
+                        colormap['Diverging']+ colormap['Qualitative'] + colormap['Miscellaneous'] + colormap['Cyclic']
+        # try:
+        #Metplotlib Method
+        
+        for i, method in enumerate(methods):
+            plt.clf()
+            plt.close()
+            img = plt.figure()
+            plt.axis("off")
+            plt.tight_layout()
+            plt.xticks([]), plt.yticks([])
+            plt.subplots_adjust(left = 0, bottom = 0, right = 1, top = 1, hspace = 0, wspace = 0)
+            # print(method)
+            _data = copy.deepcopy(data)
+            plt.imshow(_data, cmap=  method)
+            _data = figure_to_array(img)
+            # plt.savefig('method({0}-{1}).png'.format(i,method), data)
+            plt.clf()
+            if not os.path.exists(os.path.join(os.getcwd(), fname)):
+                os.mkdir(fname)
+            cv2.imwrite('./{0}/method({1}-{2}).png'.format(fname, i+1,method), _data)
+
+
+        if bboxes is not None:
+            for box in bboxes:
+                xmin = box['x1']
+                ymin = box['y1']
+                xmax = box['x2']
+                ymax = box['y2']
+                x = xmax - xmin
+                y = ymax - ymin
+                box_img = plt.figure(figsize=(x, y), dpi=1)
+                plt.axis("off")
+                plt.tight_layout()
+                plt.xticks([]), plt.yticks([])
+                plt.subplots_adjust(left = 0, bottom = 0, right = 1, top = 1, hspace = 0, wspace = 0)
+                bndbox_data = normalize_thermal(ori_data[ymin:ymax, xmin:xmax])
+
+                plt.imshow(bndbox_data, cmap=  specific_cm)
+                #plt to array
+                #Whole data overlap to bounding box img
+                data[ymin:ymax, xmin:xmax] = figure_to_array(box_img)
+                
+                #plt clear
+                plt.clf()
+    elif tool=='custom':
+        methods = ['flirpal', 'glowbowpal', 'grey10pal', 'grey120pal', 
+            'greyredpal', 'hotironpal', 'ironbowpal', 'medicalpal', 'midgreenpal',
+            'midgreypal', 'mikronprismpal', 'rainbow1234pal',
+            'rainbowpal', 'yellow']
+
+        
+        for i, method in enumerate(methods):
+            plt.clf()
+            plt.close()
+            img = plt.figure()
+            plt.axis("off")
+            plt.tight_layout()
+            plt.xticks([]), plt.yticks([])
+            plt.subplots_adjust(left = 0, bottom = 0, right = 1, top = 1, hspace = 0, wspace = 0)
+            # print(method)
+            _data = copy.deepcopy(data)
+            
+            #This is FLIR Custom map
+            
+            high = np.percentile(data, 100)
+            _data[_data>high] = high
+            low = np.percentile(data, 0)
+            _data[_data<low] = low
+
+            #This is FLIR Custom map
+            specific_cm = get_cmap(method)
+            plt.imshow(_data, cmap=  specific_cm)
+            _data = figure_to_array(img)
+            # plt.savefig('method({0}-{1}).png'.format(i,method), data)
+            plt.clf()
+            if not os.path.exists(os.path.join(os.getcwd(), fname)):
+                os.mkdir(fname)
+            cv2.imwrite('./{0}/method({1}-{2}).png'.format(fname, i+1,method), _data)
+        
+        if bboxes is not None:
+            for box in bboxes:
+                xmin = box['x1']
+                ymin = box['y1']
+                xmax = box['x2']
+                ymax = box['y2']
+                x = xmax - xmin
+                y = ymax - ymin
+                box_img = plt.figure(figsize=(x, y), dpi=1)
+                plt.axis("off")
+                plt.tight_layout()
+                plt.xticks([]), plt.yticks([])
+                plt.subplots_adjust(left = 0, bottom = 0, right = 1, top = 1, hspace = 0, wspace = 0)
+                bndbox_data = normalize_thermal(ori_data[ymin:ymax, xmin:xmax])
+
+                plt.imshow(bndbox_data, cmap=  specific_cm)
+                #plt to array
+                #Whole data overlap to bounding box img
+                data[ymin:ymax, xmin:xmax] = figure_to_array(box_img)
+                
+                #plt clear
+                plt.clf()
+    return data
 def printAvailMethod():
     '''
         enum  	cv::ColormapTypes {
@@ -319,56 +470,84 @@ def printAvailMethod():
 
 def getHistogram(data, percentile=25):
     t_data = data.copy()
-    t_max = int(data.max())
-    t_min = int(data.min())
+    if type(t_data) == list:
+        t_data = np.array(data)
+    
 
     t = np.percentile(t_data, percentile)
-    t_data[t_data>t] = 0
-
+    # print(t)
+    t_data[t_data<t] = t
+    '''
+    t_min = t_data.min()
+    t_max = t_data.max()
+    #histogram
     flatten_data = t_data.flatten()
-    #hist, bins = np.histogram(flatten_data, bins=range(0, 255))
     
-    # plt.hist(flatten_data, bins=range(t_min, t_max))
-    # plt.xlim([t_min,t_max])
-    # plt.show()
-
-    #히스토그램 퍼센타일 어떻게 할 것인가..?
-    #목적은 해당 객체의 오브젝트를 잘 표현해 보자.
-    #1) xmin, ymin, xmax, ymax안의 내용에 따로 heatmap입혀보자. (회전설비나 발열설비가 아니라면 특징점이 배경과 겹치게됨.)
-    #2) 다양한 히트맵 입히기
-    #3) 히스토그램을 분석해서 percentile을 이용해서 입혀보자.
+    hist, bins = np.histogram(flatten_data, bins=range(int(t_min), int(t_max)))
+    
+    
+    # hist, bins = np.histogram(flatten_data, bins=range(t_min+g*(k-1), t_min+g*k))
+    # print(t_min+g*(k-1), t_min+g*k)
+    # print(hist/hist.sum())
+    plt.hist(flatten_data, bins=bins)
+    plt.xlim([t_min,t_max])
+    plt.show()
+    '''
     return t_data
 
+
 if __name__ == "__main__":
+    '''
     import pascal_voc_parser2 as pvp
     all_imgs, cc, cm = pvp.get_data(input_path = "./test/", train_r=1, test_r=0, val_r=0, csv_save=True)
     train_imgs = [s for s in all_imgs if s['imageset'] == 'train']
+    print(train_imgs)
     test_dict = train_imgs[0]
-    csv_path = test_dict['csvpath']
+    '''
+    path = 'E:\\ProJ\\한수원 관련자료\\작동가능\\easy-faster-rcnn.pytorch\\data\\VOCdevkit\\20_FirsQuarter_readymade_data\\saewool1\\csv'
+    # save_name = '518-PP04.csv'
+    save_name = '811-PT02.csv'
+    csv_path = os.path.join(path, save_name)
+    
     ############ Input ##########
     data = open_path_array(csv_path)
     #Preprocessing
     
-    getHistogram(data, percentile=75)
-    normalizedImg = normalize_thermal(data)
-    getHistogram(normalizedImg, percentile=75)
+    #getHistogram(data, percentile=75)
+    #잠깐##
+    # normalizedImg = Normalizer().fit_transform(data)
+    normalizedImg = getHistogram(data, percentile=0)
+    
+    
+    ##
     # getHistogram(normalizedImg)
+
+    # Histogram
     
+    #Image Generating    
     img = heatMapConvert(normalizedImg,bboxes=None, 
-                                        specific_cm=None, 
-                                        tool='matplot', 
-                                        is_random=True)
-    img2=heatMapConvert(normalizedImg, bboxes=test_dict['bboxes'],
-                                        specific_cm=None,
-                                        tool='matplot',
-                                        is_random=True)
-    print(img2.shape)
+                                        specific_cm='flirpal', 
+                                        tool='custom',
+                                        is_random=False)
     
+    # Bounding BOx Generating
+    # img=heatMapConvert(normalizedImg, bboxes=test_dict['bboxes'],
+    #                                     specific_cm=None,
+    #                                     tool='matplot',
+    #                                     is_random=True)
+    
+    #All Image Saved
+    # img = heatMapAllImageSave(normalizedImg,bboxes=None, 
+    #                                         specific_cm=None, 
+    #                                         tool='custom',  #matplot
+    #                                         fname=save_name[:-4])
+
+    img = normalize_thermal(img)
     
     while(True):
-        cv2.imshow('test', img2)
+        cv2.imshow('test', img)
         # cv2.imshow('test2', img2)
-        if cv2.waitKey(10) ==27:
+        if cv2.waitKey(10) ==ord('q'):#27: #ESC
             cv2.destroyAllWindows()
             exit()
     

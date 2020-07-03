@@ -101,6 +101,8 @@ class RegionProposalNetwork(nn.Module):
                     gt_anchor_transformers: Tensor,
                     batch_size: int, batch_indices: Tensor):# -> Tuple[Tensor, Tensor]:
         cross_entropies = torch.empty(batch_size, dtype=torch.float, device=anchor_objectnesses.device)
+        # Using smooth_l1_losses so we can avoid outliers to dominant loss function
+        # details： https://zhuanlan.zhihu.com/p/48426076
         smooth_l1_losses = torch.empty(batch_size, dtype=torch.float, device=anchor_transformers.device)
 
         for batch_index in range(batch_size):
